@@ -2,6 +2,7 @@ class RandomMessageSimulation extends Simulation{
     constructor(node_amount){
         super()
 
+
         this.genesisNode = null;
 
         for (let i = 0; i < node_amount; i++){
@@ -21,9 +22,25 @@ class RandomMessageSimulation extends Simulation{
         this.dashboard.beginUpdates()
     }
 
+    setup(){
+    }
+
     draw(){
         for(const node of this.nodeList){
             node.draw()
         }
+
+        this.drawBackgroundScenario()
+    }
+
+    drawBackgroundScenario(){
+        push()
+        beginShape()
+        vertex(-2500,1000,-2500)
+        vertex(2500,1000,-2500)
+        vertex(2500,1000,2500)
+        vertex(-2500,1000,2500)
+        endShape()
+        pop()
     }
 }

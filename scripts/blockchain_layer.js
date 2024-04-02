@@ -41,19 +41,21 @@ class BlockchainTransaction{
 
 
 class BlockchainBlock{
-    constructor(transactions,nextProposer,order_number){
+    constructor(transactions,proposer,nextProposer,order_number){
         this.transactions = transactions
+        this.proposer = proposer
         this.nextProposer = nextProposer
         this.order_number = order_number
     }
 }
 
 class LocalBlockchain{
-    constructor(genesisNode){
+    constructor(node,genesisNode){
+        this.node = node
         this.blocks = []
         this.length = 0
         if (genesisNode != null){
-            this.addBlock(new BlockchainBlock([],genesisNode))
+            this.addBlock(new BlockchainBlock([],this.node,genesisNode,0))
         }
         this.order_number = 0
     }
@@ -77,13 +79,15 @@ class LocalBlockchain{
 }
 
 
+
+
 class BlockchainProtocol extends Protocol{
 
     constructor(node){
         super(node,"security",1,null,null);
         this.message_buffer = new MessageBuffer(800) //1000 bytes
         this.mem_pool = []
-        this.blockchain = new LocalBlockchain(null)
+        this.blockchain = new LocalBlockchain(node,null)
         this.block_to_propose = null;
     
 
@@ -99,11 +103,18 @@ class BlockchainProtocol extends Protocol{
             }
         }
 
+        this.broadcastMessage = (message)=>{
+            disp(`[${this.node.name}][BLOCKCHAIN] broadcasting message "${message.content}"`,BLOCKCHAIN_VERBOSE)
+            this.lower_protocol.broadcastMessage(message)
+        }
+
         this.createBlock = ()=>{
             const proposer = this.chooseNextProposer();
             const transactions = this.chooseTransactions();
+            this.blockchain.order_number += 1;
             const orderNumber = this.blockchain.order_number;
-            return new BlockchainBlock(transactions,proposer,orderNumber)
+            disp(`[${this.node.name}] Proposing new block (nextProposer=${proposer.name}|orderNumber=${orderNumber})`,BLOCK_VERBOSE)
+            return new BlockchainBlock(transactions,this.node,proposer,orderNumber)
         }
 
         this.chooseNextProposer = ()=>{
@@ -116,17 +127,15 @@ class BlockchainProtocol extends Protocol{
             return mem_pool_copy
         }
 
-        this.broadcastMessage = (message)=>{
-            disp(`[${this.node.name}][BLOCKCHAIN] broadcasting message "${message.content}"`,BLOCKCHAIN_VERBOSE)
-            this.lower_protocol.broadcastMessage(message)
-        }
-
 
         this.handleTransactionReceive = (transaction)=>{
-            disp(`[${this.node.name}][BLOCKCHAIN] storing received transaction`,BLOCKCHAIN_VERBOSE)
-            this.mem_pool.push(transaction)
+            disp(`[${this.node.name}][BLOCKCHAIN] transaction received from ${transaction.sendingNode.name}`,BLOCKCHAIN_VERBOSE || TRANSACTION_VERBOSE)
+            if (this.mem_pool.indexOf(transaction) == -1){
+                this.mem_pool.push(transaction)
+            }
 
             if (this.block_to_propose != null && this.mem_pool.length >= MINIMUM_TRANSACTIONS_IN_BLOCK){
+                console.log(`[${this.node.name}] Previous block next proposer is ${this.block_to_propose.nextProposer.name} and mem_pool full. Proposing new block`)
                 this.block_to_propose = null
                 const new_block = this.createBlock();
                 this.broadcastMessage(new Message(this.node,null,new_block));
@@ -134,16 +143,24 @@ class BlockchainProtocol extends Protocol{
         }
 
         this.handleBlockReceive = (block)=>{
-            disp(`[${this.node.name}][BLOCKCHAIN] storing received block`,BLOCKCHAIN_VERBOSE)
+            disp(`[${this.node.name}][BLOCKCHAIN] block received from ${block.proposer.name} (nextProposer=${block.nextProposer.name})`,BLOCKCHAIN_VERBOSE || BLOCK_VERBOSE)
+            for (const transaction of block.transactions){
+                const transaction_index = this.mem_pool.indexOf(transaction)
+                if (transaction_index != -1){
+                    this.mem_pool.splice(transaction_index,1)
+                }
+            }
             this.blockchain.addBlock(block)
 
             //TODO Report messages to application layer
 
-            if (block.nextProposer == this.node && this.mem_pool.length >= MINIMUM_TRANSACTIONS_IN_BLOCK){
-                const new_block = this.createBlock();
-                this.broadcastMessage(new Message(this.node,null,new_block));
-            }else{
-                this.block_to_propose = block
+            if (block.nextProposer == this.node){
+                if(this.mem_pool.length >= MINIMUM_TRANSACTIONS_IN_BLOCK){
+                    const new_block = this.createBlock();
+                    this.broadcastMessage(new Message(this.node,null,new_block));
+                }else{
+                    this.block_to_propose = block
+                }
             }
         }
 
@@ -175,7 +192,7 @@ class BlockchainProtocolGenesis extends BlockchainProtocol{
     constructor(node){
         super(node)
         this.firstDiscoverReceived = false
-        this.blockchain = new LocalBlockchain(this.node)
+        this.blockchain = new LocalBlockchain(this.node,this.node)
 
         this.handleDiscoverReceive = (received_message)=>{
             if (!this.firstDiscoverReceived){
@@ -189,6 +206,8 @@ class BlockchainProtocolGenesis extends BlockchainProtocol{
         this.initializeBlockchain = ()=>{
             this.broadcastMessage(new Message(this.node,null,"discover"))
         }
+
+        disp(`[${this.node.name}] I'm a genesis node!`,BLOCK_VERBOSE)
     }
 
 }

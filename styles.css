@@ -1,7 +1,7 @@
 body{
     overflow-y: hidden;
     margin: 0;
-    font-family: consolas;
+    font-family: monospace;
 }
 
 #node-dashboard{
@@ -75,5 +75,13 @@ body{
     border: none;
     background-color: transparent;
     padding: 0;
-    
+    margin-bottom: 10px;
+}
+
+.blockchain-block-div{
+    background-color: rgba(50,50,50,0.8);
+    padding: 5px;
+    margin-left: 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
 }

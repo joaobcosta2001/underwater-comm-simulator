@@ -48,15 +48,15 @@ class NodeInfoDiv{
         const transactionNumber = this.node.protocolList[1].mem_pool.length
         const blockchain = this.node.protocolList[1].blockchain
         const blockNumber = blockchain.length
-        this.nodeNameDiv.innerHTML = `  ${this.node.name}`
+        this.nodeNameDiv.innerHTML = `${this.node.name}`
         this.messageNumberDiv.innerHTML = `Message Number: ${messageNumber}`
         this.transactionNumberDiv.innerHTML = `Transaction Number: ${transactionNumber}`
         this.blockNumberDiv.innerHTML = `Block Number: ${blockNumber}`
         this.blockchainDiv.innerHTML = ""
         for (const block of this.node.protocolList[1].blockchain.blocks){
             let blockDiv = document.createElement("div")
-            blockDiv.innerHTML=`Transactions: ${block.transactions.length}<br/>`
-            blockDiv.innerHTML=`Next Proposer: ${block.nextProposer.name}`
+            blockDiv.className = "blockchain-block-div"
+            blockDiv.innerHTML=`Order Number: ${block.order_number}<br/>Transactions: ${block.transactions.length}<br/>Next Proposer: ${block.nextProposer.name}`
             this.blockchainDiv.appendChild(blockDiv)
         }
     }
@@ -105,7 +105,6 @@ class Dashboard{
     }
 
     update(){
-        console.log("Updating dashboard")
         for (const nodeInfoDiv of this.nodeInfoDivs){
             nodeInfoDiv.update()
         }

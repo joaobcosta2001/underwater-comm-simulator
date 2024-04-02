@@ -8,6 +8,7 @@ const simulation = new RandomMessageSimulation(7)
 
 function setup() {
     createCanvas(window.innerWidth, window.innerHeight,WEBGL);
+    simulation.setup()
 }
 
 function draw() {

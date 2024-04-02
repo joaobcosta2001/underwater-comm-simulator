@@ -18,6 +18,7 @@ These variables control whether to print the status of multiple parts of the sim
 - BLOCKCHAIN_VERBOSE  - if set to *true*, will print the status of the blockchain layer of all nodes
 - PHYSICAL_VERBOSE  - if set to *true*, will print the status of the physical layer of all nodes
 - CHANNEL_VERBOSE  - if set to *true*, will print the status of the channels of all nodes
+- BLOCK_VERBOSE - if set to *true*, will print the status of block operations (creation,etc.)
 
 ### Simulation Parameters
 
