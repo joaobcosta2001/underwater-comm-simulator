@@ -2,7 +2,7 @@
 
 let nodeList = []
 
-const camera = new Camera()
+const camera = new Camera(document.getElementById('main-canvas'))
 const simulation = new ProofOfStakeSimulation(7)
 const ui = new UI()
 ui.loadSimulation(simulation)

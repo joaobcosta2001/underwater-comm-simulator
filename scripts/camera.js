@@ -1,5 +1,5 @@
 class Camera{
-    constructor(){
+    constructor(canvas){
         this.position = new Vec3(0,0,0)
         this.rotation = new Vec3(0,0,0)
         this.cameraSpeed = 10;
@@ -28,11 +28,11 @@ class Camera{
             }
         })
 
-        document.addEventListener('mousedown', (event) => {
+        canvas.addEventListener('mousedown', (event) => {
             this.dragging = true;
         });
 
-        document.addEventListener('mousemove', (event) => {
+        canvas.addEventListener('mousemove', (event) => {
             if (this.dragging) {
                 let horizontalMovement = event.movementX;
                 let verticalMovement = event.movementY;
@@ -41,7 +41,7 @@ class Camera{
             }
         });
 
-        document.addEventListener('mouseup', (event) => {
+        canvas.addEventListener('mouseup', (event) => {
             this.dragging = false;
         });
     }
