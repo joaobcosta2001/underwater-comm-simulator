@@ -47,8 +47,8 @@ class Camera{
     }
 
     moveToCameraPOV(){
-        translate(this.position.x,this.position.y,this.position.z)
         rotateX(this.rotation.x)
         rotateY(this.rotation.y)
+        translate(this.position.x,this.position.y,this.position.z)
     }
 }

@@ -3,11 +3,16 @@
 let nodeList = []
 
 const camera = new Camera()
-const simulation = new RandomMessageSimulation(7)
+const simulation = new ProofOfStakeSimulation(7)
+const ui = new UI()
+ui.loadSimulation(simulation)
 
 
 function setup() {
-    createCanvas(window.innerWidth, window.innerHeight,WEBGL);
+    let canvasParent = document.getElementById('main-canvas')
+    let canvas = createCanvas(canvasParent.clientWidth,canvasParent.clientHeight,WEBGL);
+    canvas.parent('main-canvas');
+
     simulation.setup()
 }
 
@@ -21,5 +26,6 @@ function draw() {
 }
 
 function windowResized() {
-    resizeCanvas(window.innerWidth, window.innerHeight);
+    let canvasParent = document.getElementById('main-canvas')
+    resizeCanvas(canvasParent.clientWidth, canvasParent.clientHeight);
  }

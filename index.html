@@ -16,15 +16,40 @@
 		<script defer src="scripts/application_layer.js"></script>
 		<script defer src="scripts/node_presets.js"></script>
 		<script defer src="scripts/simulation.js"></script>
-		<script defer src="scripts/dashboard.js"></script>
+		<script defer src="scripts/ui.js"></script>
 		<script defer src="scripts/main.js"></script>
 	</head>
 	<body>
-		<div id="node-dashboard">
-			<button id="node-dashboard-toggle-button" class="toggle-button-closed"></button>
-			<div id="node-dashboard-nodes-div">
+		<div id="tool-bar">
+			<button id="play-button" class="tool-bar-button"><img src="./images/play.svg" alt="Play Button" class="tool-bar-button-img"/></button>
+			<button id="stop-button" class="tool-bar-button"><img src="./images/stop.svg" alt="Stop Button" class="tool-bar-button-img"/></button>
+			<button id="restart-button" class="tool-bar-button"><img src="./images/restart.svg" alt="Restart Button" class="tool-bar-button-img"/></button>
+			<button id="speed-button" class="tool-bar-button"><img src="./images/speedx1.svg" alt="Speed Button" class="tool-bar-button-img" id="speed-button-img"/></button>
 
+		</div>
+		<div id="main-div">
+			<div id="left-tab">
+				<div id="metrics">
+					<button id="metrics-title" class="title-bar">Simulation metrics <img id="metrics-closed-indicator" src="./images/3dots.svg" alt="More Metrics"/></button>
+					<div id="metrics-content">
+						Simulation time: <span id="simulation-time">0</span><br/>
+						Node count: <span id="node-count">0</span>
+					</div>
+				</div>
 			</div>
-		</dic>
+			<div id="center-div">
+				<div id="main-canvas"></div>
+				<div id="bottom-div">
+					<div id="node-list">
+						<div id="node-list-title" class="title-bar"> Node List</div>
+						<div id="node-list-content"></div>
+					</div>
+					<div id="node-details">
+						<div id="node-details-title"  class="title-bar">Node Details</div>
+						<div id="node-details-content" class="node-details-content-empty">Select a node to inspect</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</body>
 </html>

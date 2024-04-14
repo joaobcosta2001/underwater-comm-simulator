@@ -39,6 +39,14 @@ class BlockchainTransaction{
     }
 }
 
+class ProofOfStakeTransaction{
+    constructor(sendingNode,messageList,fee){
+        this.sendingNode = sendingNode
+        this.messageList = messageList
+        this.fee = fee
+    }
+}
+
 
 class BlockchainBlock{
     constructor(transactions,proposer,nextProposer,order_number){
@@ -91,6 +99,28 @@ class BlockchainProtocol extends Protocol{
         this.block_to_propose = null;
     
 
+        
+
+        this.createBlock = ()=>{
+            const proposer = this.chooseNextProposer();
+            const transactions = this.chooseTransactions();
+            this.blockchain.order_number += 1;
+            const orderNumber = this.blockchain.order_number;
+            disp(`[${this.node.name}] Proposing new block (nextProposer=${proposer.name}|orderNumber=${orderNumber})`,BLOCK_VERBOSE)
+            return new BlockchainBlock(transactions,this.node,proposer,orderNumber)
+        }
+
+        this.chooseNextProposer = ()=>{
+            return this.node.getRandomKnownNode();
+        }
+
+        this.chooseTransactions = ()=>{
+            const mem_pool_copy = this.mem_pool
+            this.mem_pool = []
+            return mem_pool_copy
+        }
+
+
         this.sendMessage = (message)=>{
             disp(`[${this.node.name}][BLOCKCHAIN] adding message "${message.content}" to message buffer`,BLOCKCHAIN_VERBOSE)
             this.message_buffer.push(message)
@@ -107,6 +137,70 @@ class BlockchainProtocol extends Protocol{
             disp(`[${this.node.name}][BLOCKCHAIN] broadcasting message "${message.content}"`,BLOCKCHAIN_VERBOSE)
             this.lower_protocol.broadcastMessage(message)
         }
+
+        this.handleDiscoverReceive = (received_message)=>{
+            this.higher_protocol.handleMessageReceive(received_message)
+        }
+
+        this.handleTransactionReceive = (transaction)=>{
+            disp(`[${this.node.name}][BLOCKCHAIN] transaction received from ${transaction.sendingNode.name}`,BLOCKCHAIN_VERBOSE)
+        }
+
+        this.handleBlockReceive = (block)=>{
+            disp(`[${this.node.name}][BLOCKCHAIN] block received from ${block.proposer.name} (nextProposer=${block.nextProposer.name})`.BLOCKCHAIN_VERBOSE || BLOCK_VERBOSE)
+        }
+
+        this.handleMessageReceive = (received_message)=>{
+            if (received_message.content instanceof BlockchainTransaction){
+                this.handleTransactionReceive(received_message.content)
+            }else if(received_message.content instanceof BlockchainBlock){
+                this.handleBlockReceive(received_message.content)
+            }else if( received_message.content === "DISCOVER_REPLY"){
+                this.handleDiscoverReceive(received_message)
+            }else{
+                console.warn("WARNING security layer received a message that does not contain a transaction nor a block")
+                this.higher_protocol.handleMessageReceive(received_message)
+            }
+        }
+
+        this.initializeBlockchain = ()=>{
+            console.error("A non genesis node was asked to initialize the blockchain!")
+        }
+    }
+}
+
+
+
+class BlockchainProtocolGenesis extends BlockchainProtocol{
+    constructor(node){
+        super(node);
+        this.firstDiscoverReceived = false
+        this.blockchain = new LocalBlockchain(this.node,this.node)
+
+        this.handleDiscoverReceive = (received_message)=>{
+            if (!this.firstDiscoverReceived){
+                const new_block = this.createBlock();
+                this.broadcastMessage(new Message(this.node,null,new_block));
+                this.firstDiscoverReceived = true
+            }
+            this.higher_protocol.handleMessageReceive(received_message)
+        }
+
+        this.initializeBlockchain = ()=>{
+            this.broadcastMessage(new Message(this.node,null,"discover"))
+        }
+
+        disp(`[${this.node.name}] I'm a genesis node!`,BLOCK_VERBOSE)
+    }
+
+}
+
+
+class ProofOfStakeProtocol extends BlockchainProtocol{
+
+    constructor(node){
+        super(node);
+        this.block_to_propose = null;
 
         this.createBlock = ()=>{
             const proposer = this.chooseNextProposer();
@@ -163,32 +257,10 @@ class BlockchainProtocol extends Protocol{
                 }
             }
         }
-
-        this.handleDiscoverReceive = (received_message)=>{
-            this.higher_protocol.handleMessageReceive(received_message)
-        }
-
-        this.handleMessageReceive = (received_message)=>{
-            if (received_message.content instanceof BlockchainTransaction){
-                this.handleTransactionReceive(received_message.content)
-            }else if(received_message.content instanceof BlockchainBlock){
-                this.handleBlockReceive(received_message.content)
-            }else if( received_message.content === "DISCOVER_REPLY"){
-                this.handleDiscoverReceive(received_message)
-            }else{
-                console.warn("WARNING security layer received a message that does not contain a transaction nor a block")
-                this.higher_protocol.handleMessageReceive(received_message)
-            }
-        }
-
-        this.initializeBlockchain = ()=>{
-            console.error("A non genesis node was asked to initialize the blockchain!")
-        }
     }
 }
 
-
-class BlockchainProtocolGenesis extends BlockchainProtocol{
+class ProofOfStakeProtocolGenesis extends ProofOfStakeProtocol{
     constructor(node){
         super(node)
         this.firstDiscoverReceived = false
@@ -196,6 +268,7 @@ class BlockchainProtocolGenesis extends BlockchainProtocol{
 
         this.handleDiscoverReceive = (received_message)=>{
             if (!this.firstDiscoverReceived){
+                this.mem_pool.push(new BlockchainTransaction(this.node,[new Message(this.node,null,"TRANSFER INITIAL 1000")]))
                 const new_block = this.createBlock();
                 this.broadcastMessage(new Message(this.node,null,new_block));
                 this.firstDiscoverReceived = true

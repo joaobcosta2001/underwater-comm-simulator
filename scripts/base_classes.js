@@ -84,6 +84,7 @@ class Node{
         this.received_messages_buffer = []
         this.channels = []
         this.knownNodes = []
+        this.propertiesToDisplay = ["name","position",["received_messages_buffer","length"],["knownNodes","length"]]
     }
 
     addProtocol(protocol,i = -1){
@@ -109,7 +110,9 @@ class Node{
     }
 
     addKnownNode(node){
-        this.knownNodes.push(node);
+        if (!this.knownNodes.includes(node)) {
+            this.knownNodes.push(node);
+        }
     }
 
 
@@ -168,9 +171,34 @@ class Simulation{
 
     constructor(){
         this.nodeList = []
+        this.speed = 1
+        this.startTime = Date.now()
+        this.lastUnpauseTime = Date.now()
+        this.unpausedCumulatedTime = 0;
+        this.state = "playing"
+    }
+
+    pause(){
+        this.state = "paused"
+        this.unpausedCumulatedTime += Date.now()-this.lastUnpauseTime
+    }
+    play(){
+        this.state = "playing"
+        this.lastUnpauseTime = Date.now()
+    }
+
+    getElapsedTime(){
+        if (this.state == "paused"){
+            return this.unpausedCumulatedTime
+        }else{
+            return this.unpausedCumulatedTime + (Date.now()-this.lastUnpauseTime)
+        }
     }
 
     simulate(){
+        if(this.state == "paused"){
+            return
+        }
         for (const node of this.nodeList){
             node.simulate()
         }
@@ -184,6 +212,15 @@ class Simulation{
 
     getRandomNode(){
         return this.nodeList[Math.floor(Math.random()*this.nodeList.length)]
+    }
+
+    getNodeByName(name){
+        for (const node of this.nodeList){
+            if (node.name == name){
+                return node
+            }
+        }
+        return null
     }
 
 }
