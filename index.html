@@ -11,11 +11,12 @@
 		<script defer src="scripts/camera.js"></script>
 		<script defer src="scripts/base_classes.js"></script>
 		<script defer src="scripts/aux_functions.js"></script>
-		<script defer src="scripts/physical_layer.js"></script>
 		<script defer src="scripts/blockchain_layer.js"></script>
-		<script defer src="scripts/application_layer.js"></script>
-		<script defer src="scripts/node_presets.js"></script>
-		<script defer src="scripts/simulation.js"></script>
+		<script defer src="scripts/implementations/physical_layer_implementations.js"></script>
+		<script defer src="scripts/implementations/blockchain_layer_implementations.js"></script>
+		<script defer src="scripts/implementations/application_layer_implementations.js"></script>
+		<script defer src="scripts/implementations/node_implementations.js"></script>
+		<script defer src="scripts/implementations/simulation_implementations.js"></script>
 		<script defer src="scripts/ui.js"></script>
 		<script defer src="scripts/main.js"></script>
 	</head>
@@ -30,12 +31,18 @@
 		<div id="main-div">
 			<div id="left-tab">
 				<div id="metrics">
-					<button id="metrics-title" class="title-bar">Simulation metrics <img id="metrics-closed-indicator" src="./images/3dots.svg" alt="More Metrics"/></button>
+					<button id="metrics-title" class="title-bar title-bar-button">Simulation metrics <img id="metrics-closed-indicator" src="./images/3dots.svg" alt="Show Metrics"/></button>
 					<div id="metrics-content">
 						Simulation time: <span id="simulation-time">0</span><br/>
 						Node count: <span id="node-count">0</span>
 					</div>
 				</div>
+				<div id="bc-state">
+					<button id="bc-state-title" class="title-bar title-bar-button">Blockchain <img id="bc-state-closed-indicator" src="./images/3dots.svg" alt="Show Blockchain State"/></button>
+					<div id="bc-state-content">
+						Simulation time: <span id="simulation-time">0</span><br/>
+						Node count: <span id="node-count">0</span>
+					</div></div>
 			</div>
 			<div id="center-div">
 				<div id="main-canvas"></div>

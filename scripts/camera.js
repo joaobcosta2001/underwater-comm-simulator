@@ -32,23 +32,32 @@ class Camera{
             this.dragging = true;
         });
 
-        canvas.addEventListener('mousemove', (event) => {
+        document.addEventListener('mousemove', (event) => {
             if (this.dragging) {
                 let horizontalMovement = event.movementX;
                 let verticalMovement = event.movementY;
+                if (event.shiftKey) {
+                    this.position.x += horizontalMovement * this.cameraSpeed * this.mouseSensitivity;
+                    this.position.y += verticalMovement * this.cameraSpeed * this.mouseSensitivity;
+                }else{
                 this.rotation.y += horizontalMovement * this.cameraAngularSpeed * this.mouseSensitivity;
                 this.rotation.x -= verticalMovement * this.cameraAngularSpeed * this.mouseSensitivity;
+                }
             }
         });
 
-        canvas.addEventListener('mouseup', (event) => {
+        document.addEventListener('mouseup', (event) => {
             this.dragging = false;
+        });
+
+        canvas.addEventListener('wheel', (event) => {
+            this.position.z -= event.deltaY * this.cameraSpeed * this.mouseSensitivity;
         });
     }
 
     moveToCameraPOV(){
+        translate(this.position.x,this.position.y,this.position.z)
         rotateX(this.rotation.x)
         rotateY(this.rotation.y)
-        translate(this.position.x,this.position.y,this.position.z)
     }
 }

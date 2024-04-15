@@ -26,19 +26,6 @@ class RandomMessageSimulation extends Simulation{
         for(const node of this.nodeList){
             node.draw()
         }
-
-        this.drawBackgroundScenario()
-    }
-
-    drawBackgroundScenario(){
-        push()
-        beginShape()
-        vertex(-2500,1000,-2500)
-        vertex(2500,1000,-2500)
-        vertex(2500,1000,2500)
-        vertex(-2500,1000,2500)
-        endShape()
-        pop()
     }
 }
 
@@ -50,6 +37,8 @@ class ProofOfStakeSimulation extends Simulation{
 
 
         this.genesisNode = null;
+
+        this.globalBlockchain = new LocalBlockchain(null,false)
 
         for (let i = 0; i < node_amount; i++){
             let new_node = null;
@@ -73,17 +62,5 @@ class ProofOfStakeSimulation extends Simulation{
             node.draw()
         }
 
-        this.drawBackgroundScenario()
-    }
-
-    drawBackgroundScenario(){
-        push()
-        beginShape()
-        vertex(-2500,1000,-2500)
-        vertex(2500,1000,-2500)
-        vertex(2500,1000,2500)
-        vertex(-2500,1000,2500)
-        endShape()
-        pop()
     }
 }

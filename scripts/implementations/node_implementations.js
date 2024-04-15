@@ -101,7 +101,10 @@ class ProofOfStakeNode extends Node{
         
         this.lastMessageTime = Date.now()
         this.messageDelay = 1000 + 4000 * Math.random()
+
         this.target_position = new Vec3(-1000+Math.random()*2000,-1000+Math.random()*2000,-1000+Math.random()*2000)
+        this.deltaVec = Vec3.directionVector(this.position,this.target_position).normalize()
+        this.direction = Vec3.getRotationAngles(this.deltaVec,Vec3.xVec)
 
         this.simulate = ()=>{
 
@@ -137,6 +140,9 @@ class ProofOfStakeNode extends Node{
             //Has arrived
             if(this.position.distance2(this.target_position) < this.velocity){
                 this.target_position = new Vec3(-1000+Math.random()*2000,-1000+Math.random()*2000,-1000+Math.random()*2000)
+                this.deltaVec = Vec3.directionVector(this.position,this.target_position).normalize()
+                this.direction = Vec3.getRotationAngles(this.deltaVec,Vec3.xVec)
+                
             }
             const directionVec = Vec3.directionVector(this.position,this.target_position)
             const resizeDirectionVec = directionVec.resize(this.velocity)
@@ -145,7 +151,7 @@ class ProofOfStakeNode extends Node{
         }
 
         
-        this.propertiesToDisplay = ["name","position",["received_messages_buffer","length"],["knownNodes","length"],["protocolList",1,"mem_pool","length"],["protocolList",1,"blockchain","length"]]
+        this.propertiesToDisplay = ["name","position","target_position","direction",["received_messages_buffer","length"],["knownNodes","length"],["protocolList",1,"mem_pool","length"],["protocolList",1,"blockchain","length"]]
         
     }
 
@@ -160,10 +166,27 @@ class ProofOfStakeNode extends Node{
 
 
     draw(){
+        drawDebugAxis()
+        //line(this.position.x,this.position.y,this.position.z,this.target_position.x,this.target_position.y,this.target_position.z)
         push()
         translate(this.position.x,this.position.y,this.position.z)
         fill(255,255-255/30*(this.protocolList[1].mem_pool.length),255-255/30*(this.protocolList[1].mem_pool.length));
-        box()
+        if(this.simulation.ui.selectedNode == this){
+            fill(255,0,0)
+        }else{
+            fill(255)
+        }
+
+        if (torpedoModel == null){
+            stroke(0)
+            box()
+        }else{
+            noStroke()
+            rotateY(this.direction.x)
+            rotateX(-this.direction.y)
+            rotateY(Math.PI)
+            model(torpedoModel)
+        }
         pop()
     }
    

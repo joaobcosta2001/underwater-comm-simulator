@@ -13,3 +13,5 @@ const MESSAGE_LIFE_AFTER_ARRIVAL = 2000 //In milliseconds
 const MINIMUM_TRANSACTIONS_IN_BLOCK = 5
 
 const DASHBOARD_UPDATE_PERIOD = 1000 //In milliseconds
+
+const BROADCAST_PULL_PERIOD = 3000 //In milliseconds

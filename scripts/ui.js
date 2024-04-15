@@ -11,6 +11,8 @@ class UI{
     constructor(){
         this.simulation = null;
 
+        this.selectedNode = null;
+
         //----TOOL BAR------
         //SPEED BUTTON
         this.speedButtonImage = document.getElementById("speed-button-img")
@@ -63,11 +65,16 @@ class UI{
             }
             location.reload()
         })
+
+
+        //Blockchain State
+        this.openBlocksList = []
     }
 
 
     loadSimulation(simulation){
         this.simulation = simulation;
+        simulation.ui = this;
 
 
 
@@ -84,6 +91,7 @@ class UI{
                 this.nodeDetailsCurrentIntervalID = null;
             }
             this.selectedNodeDiv = null;
+            this.selectedNode = null
             this.nodeDetailsContent.innerHTML = "Select a node to inspect"
             this.nodeDetailsContent.className = "node-details-content-empty"
         }
@@ -95,13 +103,17 @@ class UI{
                 let fieldName = ""
                 if (typeof property === "string"){
                     fieldName = `${property.charAt(0).toUpperCase() + property.slice(1)}`
-                    field = `${node[property]}`
+                    field = node[property]
                 }else if(Array.isArray(property)){
                     field = node[property[0]]
                     fieldName = property[0].charAt(0).toUpperCase() + property[0].slice(1)
                     for (const subproperty of property.slice(1)){
                         field = field[subproperty]
-                        fieldName += `.${subproperty}`
+                        if (typeof field.subproperty ==="number"){
+                            fieldName += `[${subproperty}]`
+                        }else{
+                            fieldName += `.${subproperty}`
+                        }
                         if (field === undefined){
                             console.error("Properties to show of a node are not well configured! Found an undefined")
                             break;
@@ -112,7 +124,13 @@ class UI{
                     nodeDetails += `${fieldName}: ${field}<br/>`
                 }
                 else if (field instanceof Vec3){
-                    nodeDetails += `${fieldName}: ${field.x},${field.y},${field.z}<br/>`
+                    if (field.type === "angle"){
+                        console.log(`Field ${fieldName} is an angle`)
+                        field = field.toDegrees()
+                        nodeDetails += `${fieldName}: ${field.x.toFixed(3)}º, ${field.y.toFixed(3)}º, ${field.z.toFixed(3)}º<br/>`
+                    }else{
+                        nodeDetails += `${fieldName}: ${field.x.toFixed(3)}, ${field.y.toFixed(3)}, ${field.z.toFixed(3)}<br/>`
+                    }
                 }else{
                     console.error(`Property type found which parser doesnt know how to process (${typeof field})` )
                 }
@@ -121,6 +139,7 @@ class UI{
         }
 
         this.showNodeDetails = (node)=>{
+            this.selectedNode = node;
             this.nodeDetailsContent.innerHTML = this.parseNodeDetails(node)
             clearInterval(this.nodeDetailsCurrentIntervalID);
             this.nodeDetailsCurrentIntervalID = setInterval(()=>{
@@ -157,29 +176,83 @@ class UI{
         }
 
 
-        //METRICS UPDATES
+    
+        //LEFT TAB
         this.LEFT_TAB_UPDATE_PERIOD = 100;
+
+        //METRICS
+
+        this.metricsOpen = true
         this.metricsContent = document.getElementById("metrics-content")
+        this.metricsButton = document.getElementById("metrics-title");
+        this.metricsClosedIndicator = document.getElementById("metrics-closed-indicator");
+        this.metricsButton.addEventListener("click",()=>{
+            if(this.metricsOpen){
+                this.metricsContent.style.display = "none"
+                this.metricsClosedIndicator.style.display = "block"
+            }else{
+                this.metricsContent.style.display = "flex"
+                this.metricsClosedIndicator.style.display = "none"
+            }
+            this.metricsOpen = !this.metricsOpen
+        })
+
+        //BLOCKCHAIN STATE 
+
+        this.bcStateOpen = true
+        this.bcStateContent = document.getElementById("bc-state-content")
+        this.bcStateButton = document.getElementById("bc-state-title");
+        this.bcStateClosedIndicator = document.getElementById("bc-state-closed-indicator");
+        this.bcStateButton.addEventListener("click",()=>{
+            if(this.bcStateOpen){
+                this.bcStateContent.style.display = "none"
+                this.bcStateClosedIndicator.style.display = "block"
+            }else{
+                this.bcStateContent.style.display = "flex"
+                this.bcStateClosedIndicator.style.display = "none"
+            }
+            this.bcStateOpen = !this.bcStateOpen
+        })
+
         this.updateLeftTabIntervalID = setInterval(()=>{
-            metricsContent.innerHTML = `Simulation Time: ${(this.simulation.getElapsedTime()/1000).toFixed(3)}s<br/>Node Count: ${this.simulation.nodeList.length}<br/>`
+            //Update metrics
+            this.metricsContent.innerHTML = `Simulation Time: ${(this.simulation.getElapsedTime()/1000).toFixed(3)}s<br/>Node Count: ${this.simulation.nodeList.length}<br/>`
         },this.LEFT_TAB_UPDATE_PERIOD)
+
+        this.updateBlockchainState()
     }
 
-
+    updateBlockchainState(){
+        if (this.bcStateContent == null){
+            return
+        }
+        this.bcStateContent.innerHTML = ""
+        for (const block of this.simulation.globalBlockchain.blocks){
+            let blockDiv = document.createElement("div")
+            blockDiv.className = "bc-state-block-div"
+            let blockTitle = document.createElement("div")
+            blockTitle.className = "bc-state-block-title"
+            blockTitle.innerHTML = `Block ${block.id}`
+            let blockInfo = document.createElement("div")
+            blockInfo.className = "bc-state-block-info"
+            blockInfo.innerHTML = `Transactions: ${block.transactions.length}<br/>Proposer: ${block.proposer == null?"GENESIS":block.proposer.name}<br/>Next Proposer: ${block.nextProposer.name}`
+            if (!this.openBlocksList.includes(block)){
+                blockInfo.style.display = "none"
+            }
+            blockTitle.addEventListener("click",()=>{
+                if (blockInfo.style.display == "none"){
+                    blockInfo.style.display = "block"
+                    this.openBlocksList.push(block)
+                }else{
+                    blockInfo.style.display = "none"
+                    this.openBlocksList.pop(block)
+                }
+            })
+            blockDiv.appendChild(blockTitle)
+            blockDiv.appendChild(blockInfo)
+            this.bcStateContent.appendChild(blockDiv)
+        }
+    }
 }
 
 
-let metricsOpen = true
-let metricsContent = document.getElementById("metrics-content");
-let metricsButton = document.getElementById("metrics-title");
-let metricsClosedIndicator = document.getElementById("metrics-closed-indicator");
-metricsButton.addEventListener("click",()=>{
-    if(metricsOpen){
-        metricsContent.style.display = "none"
-        metricsClosedIndicator.style.display = "block"
-    }else{
-        metricsContent.style.display = "flex"
-        metricsClosedIndicator.style.display = "none"
-    }
-    metricsOpen = !metricsOpen
-})

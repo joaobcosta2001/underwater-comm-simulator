@@ -81,6 +81,7 @@ class Node{
         this.position = new Vec3(x,y,z);
         this.velocity = 1;
         this.direction = new Vec3(0,0,0);
+        this.direction.type = "angle"
         this.received_messages_buffer = []
         this.channels = []
         this.knownNodes = []
@@ -176,6 +177,7 @@ class Simulation{
         this.lastUnpauseTime = Date.now()
         this.unpausedCumulatedTime = 0;
         this.state = "playing"
+        this.ui = null;
     }
 
     pause(){
