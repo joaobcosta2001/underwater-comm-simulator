@@ -20,7 +20,14 @@ class Message{
         this.sender = sender;
         this.receiver = receiver;
         this.content = content;
-        this.length = 128+128+this.content.length*8
+        if (typeof this.content === "string"){
+            this.length = 128+128+this.content.length*8
+        }else if (typeof this.content === "object"){
+            this.length = 128+128+100*8
+        }else{
+            this.length = 128+128+256
+        }
+        this.creationTime = Date.now();
         this.sendingTime = null;
         this.arrivalTime = null;
     }
@@ -29,7 +36,7 @@ class Message{
 
 class Channel{
 
-    constructor(node,name,propagation_speed,transfer_speed,message_error_ratio,max_distance){
+    constructor(node,name,propagation_speed,transfer_speed,half_distance){
         this.node = node
         this.name = name
         //Constant that expresses how many meters a signal travels in one second (in meters per second)
@@ -37,36 +44,51 @@ class Channel{
         //Constant that expresses how many bits can the node put in the communication channel per second (in bits per second)
         this.transfer_speed = transfer_speed;
         //Probabilistic function that takes distance and outputs message error ratio
-        this.message_error_ratio = message_error_ratio;
-        //Distance from which the channel is assumed to be disconnected
-        this.max_distance = max_distance;
+        this.half_distance = half_distance;
+    }
+
+    //Wether a message can go through
+    hasConnectivity(distance){
+        let randomValue = Math.random()
+        return (randomValue < 1-0.5/Math.pow(this.half_distance,2)*Math.pow(distance,2)) 
+    }
+
+    withinRange(node2){
+        return Vec3.distance(this.node.position, node2.position) < 1.4142 * this.half_distance //sqrt(2)
     }
 
     sendMessage(message){
         disp(`[${this.node.name}][CHANNEL ${this.name}] sending message ${message.content} to ${message.receiver.name}`,CHANNEL_VERBOSE)
         let distance = Node.getDistance(message.sender,message.receiver) //calculate distance
-        //Check if receiver is within communicating distance
-        if(distance > this.max_distance){
+        //Simulate errors
+        if (!this.hasConnectivity(distance)){
+            disp(`[${this.node.name}][CHANNEL ${this.name}] message ${message.content} failed to reach ${message.receiver.name} (distance=${distance})`,CHANNEL_VERBOSE)
             return false;
         }
         //Calculate delay
         let delay = distance / this.propagation_speed + message.length / this.transfer_speed;
-        //Simulate errors
-        let mer = this.message_error_ratio(distance);
-        if (mer < Math.random()){
-            message.sendingTime = Date.now();
-            //Send message with calculated delay
-            setTimeout(()=>{
-                disp(`[${this.node.name}][CHANNEL ${this.name}] Message ${message.content} arrived to ${message.receiver.name}`,CHANNEL_VERBOSE)
-                message.receiver.handleMessageReceive(message)
-                message.receiver.received_messages_buffer.push(message);
-                message.arrivalTime = Date.now()
-            },delay*1000)
-            return true;
-        }else{
-            disp(`[${this.node.name}][CHANNEL ${this.name}] message ${message.content} failed to reach ${message.receiver.name} (distance=${distance}|MER=${mer})`,CHANNEL_VERBOSE)
+        message.sendingTime = Date.now();
+        //Send message with calculated delay
+        setTimeout(()=>{
+            disp(`[${this.node.name}][CHANNEL ${this.name}] Message ${message.content} arrived to ${message.receiver.name}`,CHANNEL_VERBOSE)
+            message.receiver.handleMessageReceive(message)
+            message.receiver.received_messages_buffer.push(message);
+            message.arrivalTime = Date.now()
+        },delay*1000/TIME_MULTIPLIER)
+        return true;
+    }
+
+    getNodeDegree(nodeList){
+        let degree = 0
+        for (const node of nodeList){
+            if (node == this.node){
+                continue
+            }
+            if (this.withinRange(node)){
+                degree += 1
+            }
         }
-        return false;
+        return degree
     }
 
 }
@@ -79,13 +101,16 @@ class Node{
         this.name = name;
         this.protocolList = [];
         this.position = new Vec3(x,y,z);
-        this.velocity = 1;
+        this.velocity = 0.1;
         this.direction = new Vec3(0,0,0);
         this.direction.type = "angle"
         this.received_messages_buffer = []
         this.channels = []
         this.knownNodes = []
         this.propertiesToDisplay = ["name","position",["received_messages_buffer","length"],["knownNodes","length"]]
+        this.events = []
+        this.model = null
+        this.lastSimulateTimestamp = Date.now()
     }
 
     addProtocol(protocol,i = -1){
@@ -165,42 +190,68 @@ class Node{
         }
         stroke(0,0,0)
     }
+
+    simulateMessageExchange(){
+        console.log("simulateMessageExchange() is not implemented for this node")
+    }
+
+    simulatePhysicalMovement(){
+        console.log("simulatePhysicalMovement() is not implemented for this node")
+    }
+
+    simulate(){
+        let now = Date.now()
+        let deltaTime = (now-this.lastSimulateTimestamp)*TIME_MULTIPLIER
+        this.lastSimulateTimestamp = now
+        this.simulateMessageExchange(deltaTime)
+        this.simulatePhysicalMovement(deltaTime)
+    }
 }
 
 
 class Simulation{
 
-    constructor(){
+    constructor(simulator){
+        this.simulator = simulator
         this.nodeList = []
         this.speed = 1
         this.startTime = Date.now()
-        this.lastUnpauseTime = Date.now()
-        this.unpausedCumulatedTime = 0;
+        this.lastRegisteredTime = Date.now()
+        this.totalSimulationTime = 0 //In milliseconds
         this.state = "playing"
         this.ui = null;
+
+        this.pausedDueToVisibilityChange = false
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.pause();
+                this.pausedDueToVisibilityChange = true
+            } else if(this.pausedDueToVisibilityChange) {
+                this.play();
+            }
+        });
     }
 
     pause(){
         this.state = "paused"
-        this.unpausedCumulatedTime += Date.now()-this.lastUnpauseTime
     }
     play(){
         this.state = "playing"
-        this.lastUnpauseTime = Date.now()
+        this.lastRegisteredTime = Date.now()
     }
 
     getElapsedTime(){
-        if (this.state == "paused"){
-            return this.unpausedCumulatedTime
-        }else{
-            return this.unpausedCumulatedTime + (Date.now()-this.lastUnpauseTime)
-        }
+        return this.totalSimulationTime
     }
 
     simulate(){
         if(this.state == "paused"){
             return
         }
+        let now = Date.now()
+        let deltaTime = (now-this.lastRegisteredTime)*TIME_MULTIPLIER
+        this.lastRegisteredTime = now
+        this.totalSimulationTime += deltaTime
         for (const node of this.nodeList){
             node.simulate()
         }

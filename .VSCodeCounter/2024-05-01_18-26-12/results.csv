@@ -1,0 +1,32 @@
+"filename", "language", "CSS", "HTML", "JavaScript", "Markdown", "XML", "Makefile", "comment", "blank", "total"
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\README.md", "Markdown", 0, 0, 0, 179, 0, 0, 0, 133, 312
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\3dots-v.svg", "XML", 0, 0, 0, 0, 59, 0, 1, 2, 62
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\3dots.svg", "XML", 0, 0, 0, 0, 66, 0, 1, 2, 69
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\download.svg", "XML", 0, 0, 0, 0, 53, 0, 1, 2, 56
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\node.svg", "XML", 0, 0, 0, 0, 50, 0, 1, 2, 53
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\play.svg", "XML", 0, 0, 0, 0, 59, 0, 1, 2, 62
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\restart.svg", "XML", 0, 0, 0, 0, 53, 0, 1, 2, 56
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\speedx1.svg", "XML", 0, 0, 0, 0, 70, 0, 1, 2, 73
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\speedx16.svg", "XML", 0, 0, 0, 0, 70, 0, 1, 2, 73
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\speedx2.svg", "XML", 0, 0, 0, 0, 70, 0, 1, 2, 73
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\speedx4.svg", "XML", 0, 0, 0, 0, 70, 0, 1, 2, 73
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\speedx64.svg", "XML", 0, 0, 0, 0, 70, 0, 1, 2, 73
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\images\stop.svg", "XML", 0, 0, 0, 0, 50, 0, 1, 2, 53
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\index.html", "HTML", 0, 75, 0, 0, 0, 0, 0, 1, 76
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\makefile", "Makefile", 0, 0, 0, 0, 0, 12, 5, 5, 22
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\aux_functions.js", "JavaScript", 0, 0, 94, 0, 0, 0, 3, 20, 117
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\base_classes.js", "JavaScript", 0, 0, 192, 0, 0, 0, 12, 34, 238
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\blockchain_layer.js", "JavaScript", 0, 0, 133, 0, 0, 0, 1, 26, 160
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\camera.js", "JavaScript", 0, 0, 56, 0, 0, 0, 0, 7, 63
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\application_layer_implementations.js", "JavaScript", 0, 0, 31, 0, 0, 0, 0, 4, 35
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\blockchain_layer_implementations.js", "JavaScript", 0, 0, 234, 0, 0, 0, 2, 54, 290
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\node_implementations.js", "JavaScript", 0, 0, 203, 0, 0, 0, 12, 72, 287
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\physical_layer_implementations.js", "JavaScript", 0, 0, 45, 0, 0, 0, 0, 4, 49
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\simulation_implementations.js", "JavaScript", 0, 0, 99, 0, 0, 0, 0, 39, 138
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\main.js", "JavaScript", 0, 0, 104, 0, 0, 0, 9, 22, 135
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\shaders.js", "JavaScript", 0, 0, 20, 0, 0, 0, 0, 3, 23
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\ui.js", "JavaScript", 0, 0, 324, 0, 0, 0, 32, 54, 410
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\variables.js", "JavaScript", 0, 0, 12, 0, 0, 0, 0, 6, 18
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\styles.css", "CSS", 368, 0, 0, 0, 0, 0, 0, 72, 440
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\visual-identity\logos.svg", "XML", 0, 0, 0, 0, 563, 0, 1, 2, 566
+"Total", "-", 368, 75, 1547, 179, 1303, 12, 89, 582, 4155

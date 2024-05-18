@@ -10,8 +10,16 @@ const TRANSACTION_VERBOSE = false
 
 
 const MESSAGE_LIFE_AFTER_ARRIVAL = 2000 //In milliseconds
-const MINIMUM_TRANSACTIONS_IN_BLOCK = 5
+const MINIMUM_MESSAGES_IN_TRANSACTION = 20
+const MINIMUM_TRANSACTIONS_IN_BLOCK = 100
+const MESSAGE_BUFFER_SIZE = 2048
 
 const DASHBOARD_UPDATE_PERIOD = 1000 //In milliseconds
 
 const BROADCAST_PULL_PERIOD = 3000 //In milliseconds
+
+// Variable variables (i know it's a bad name)
+
+let PHYSICAL_DISTANCE_MULTIPLIER = 1
+let TIME_MULTIPLIER = 1
+

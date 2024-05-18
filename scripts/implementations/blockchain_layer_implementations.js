@@ -2,7 +2,7 @@ class BlockchainProtocol extends Protocol{
 
     constructor(node){
         super(node,"security",1,null,null);
-        this.message_buffer = new MessageBuffer(800) //1000 bytes
+        this.message_buffer = new MessageBuffer(MESSAGE_BUFFER_SIZE) //1000 bytes
         this.mem_pool = []
         this.blockchain = new LocalBlockchain(node,null)
         this.block_to_propose = null;
@@ -12,8 +12,9 @@ class BlockchainProtocol extends Protocol{
         
 
         this.addTransaction = (transaction)=>{
-            if (this.transactionList.indexOf(transaction) == -1){
-                this.transactionList.push(transaction)
+            if (this.mem_pool.indexOf(transaction) == -1){
+                this.mem_pool.push(transaction)
+            }else{
             }
         }
 
@@ -49,16 +50,35 @@ class BlockchainProtocol extends Protocol{
             
         }
 
+
+        this.isNextProposer = ()=>{
+            if (this.blockchain.length == 0){
+                return false
+            }
+            return this.blockchain.blocks[this.blockchain.blocks.length-1].nextProposer == this.node
+        }
+
         this.sendMessage = (message)=>{
             disp(`[${this.node.name}][BLOCKCHAIN] adding message "${message.content}" to message buffer`,BLOCKCHAIN_VERBOSE)
             this.message_buffer.push(message)
             if (this.message_buffer.checkAlmostFull()){
-                disp(`[${this.node.name}][BLOCKCHAIN] message buffer full, creating transaction`,BLOCKCHAIN_VERBOSE)
-                let messages_for_transaction = this.message_buffer.flush()
-                let new_transaction = new BlockchainTransaction(message.sender,messages_for_transaction)
-                this.mem_pool.push(new_transaction)
-                this.lower_protocol.broadcastMessage(new Message(this.node, null,new_transaction))
+                console.log("Buffer is almost full")
+                this.createTransaction()
             }
+        }
+
+        //Sends a message that wont be retained in the message buffer and be part of a transaction
+        this.sendExpressMessage = (message)=>{
+            this.lower_protocol.sendMessage(message)
+        }
+
+        this.createTransaction = ()=>{
+            disp(`[${this.node.name}][BLOCKCHAIN] message buffer full, creating transaction`,BLOCKCHAIN_VERBOSE)
+            let messages_for_transaction = this.message_buffer.flush()
+            let new_transaction = new BlockchainTransaction(this.node,messages_for_transaction)
+            this.mem_pool.push(new_transaction)
+            this.lower_protocol.broadcastMessage(new Message(this.node, null,new_transaction))
+
         }
 
         this.broadcastMessage = (message)=>{
@@ -87,7 +107,12 @@ class BlockchainProtocol extends Protocol{
                     blocks_to_send.push(block)
                 }
             }
-            this.sendMessage(new Message(this.node,received_message.sender,{
+            for (const block of this.blockchain.blocks){
+                if (block.id > received_message.content.payload.lastKnownBlock && blocks_to_send.indexOf(block) == -1){
+                    blocks_to_send.push(block)
+                }
+            }
+            this.sendExpressMessage(new Message(this.node,received_message.sender,{
                 type:"BCStatusUpdateReply",
                 payload:{
                     blocks:blocks_to_send,
@@ -98,22 +123,34 @@ class BlockchainProtocol extends Protocol{
         }
 
         this.handleBlockchainStatusUpdateReplyReceive = (received_message)=>{
+            let unknownTransactionCount = 0
+            let unknownBlockCount = 0
             for (const transaction of received_message.content.payload.transactions){
                 this.addTransaction(transaction)
+                unknownTransactionCount += 1
             }
             for (const block of received_message.content.payload.blocks){
                 this.blockchain.addBlock(block)
+                this.handleBlockReceive(block)
+                unknownBlockCount += 1
             }
+            this.node.simulation.simulator.ui.addNodeEvent(this.node,`${unknownTransactionCount},${unknownBlockCount},${this.blockchain.length},${this.node.channels[0].getNodeDegree(this.node.simulation.nodeList)},${this.isNextProposer()}`)
         }
 
-
-
         this.handleTransactionReceive = (transaction)=>{
+            if (this.mem_pool.indexOf(transaction) == -1){
+                this.mem_pool.push(transaction)
+            }
             disp(`[${this.node.name}][BLOCKCHAIN] transaction received from ${transaction.sendingNode.name}`,BLOCKCHAIN_VERBOSE)
         }
 
         this.handleBlockReceive = (block)=>{
             disp(`[${this.node.name}][BLOCKCHAIN] block received from ${block.proposer.name} (nextProposer=${block.nextProposer.name})`.BLOCKCHAIN_VERBOSE || BLOCK_VERBOSE)
+            for (const transaction of block.transactions){
+                while(transaction.messageList.length > 0){
+                    const message = transaction.messageList.pop()
+                }
+            }
         }
 
         this.handleMessageReceive = (received_message)=>{
@@ -147,11 +184,10 @@ class BlockchainProtocol extends Protocol{
         
         setInterval(() => {
             this.getBlockchainStatusUpdate()
-        }, BROADCAST_PULL_PERIOD);
+        }, BROADCAST_PULL_PERIOD/TIME_MULTIPLIER);
     }
 
 }
-
 
 
 class BlockchainProtocolGenesis extends BlockchainProtocol{
@@ -179,24 +215,36 @@ class BlockchainProtocolGenesis extends BlockchainProtocol{
 }
 
 
-//TODO  add fees
-
 class ProofOfStakeProtocol extends BlockchainProtocol{
 
-    constructor(node){
+    constructor(node, balance){
         super(node);
         this.block_to_propose = null;
+        this.blockchain = new LocalProofOfStakeBlockchain(node,null,balance)
 
         this.createBlock = ()=>{
             const proposer = this.chooseNextProposer();
+            if (proposer == null){
+                console.error("Genesis block doesnt known any node!")
+            }
             const transactions = this.chooseTransactions();
             this.blockchain.id += 1;
             const orderNumber = this.blockchain.id;
             disp(`[${this.node.name}] Proposing new block (nextProposer=${proposer.name}|orderNumber=${orderNumber})`,BLOCK_VERBOSE)
             let newBlock = new BlockchainBlock(transactions,this.node,proposer,orderNumber)
+
+            //Update UI global blockchain
             this.node.simulation.globalBlockchain.addBlock(newBlock)
             this.node.simulation.ui.updateBlockchainState()
             return newBlock
+        }
+
+        this.createTransaction = ()=>{
+            disp(`[${this.node.name}][BLOCKCHAIN] message buffer full, creating transaction`,BLOCKCHAIN_VERBOSE)
+            let messages_for_transaction = this.message_buffer.flush()
+            let new_transaction = new ProofOfStakeTransaction(this.node,messages_for_transaction,Date.now(),Math.random()*10)
+            this.mem_pool.push(new_transaction)
+            this.lower_protocol.broadcastMessage(new Message(this.node, null,new_transaction))
         }
 
         this.chooseNextProposer = ()=>{
@@ -249,15 +297,16 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
 }
 
 class ProofOfStakeProtocolGenesis extends ProofOfStakeProtocol{
-    constructor(node){
+    constructor(node,balance){
         super(node)
         this.firstDiscoverReceived = false
-        this.blockchain = new LocalBlockchain(this.node,this.node)
+        this.blockchain = new LocalProofOfStakeBlockchain(this.node,this.node,balance)
 
         this.handleDiscoverReceive = (received_message)=>{
             if (!this.firstDiscoverReceived){
                 this.mem_pool.push(new BlockchainTransaction(this.node,[new Message(this.node,null,"TRANSFER INITIAL 1000")]))
                 const new_block = this.createBlock();
+                console.log(`[${this.node.name}] Genesis node proposing block with proposer ${new_block.proposer.name} and next proposer ${new_block.nextProposer.name}`)
                 this.broadcastMessage(new Message(this.node,null,new_block));
                 this.firstDiscoverReceived = true
             }

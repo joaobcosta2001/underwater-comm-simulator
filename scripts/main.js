@@ -1,45 +1,83 @@
-//Define channels
+class Simulator{
+    constructor(){
+        //Preload assets
+        this.assets = {}
+        this.loadAssets()
 
-let nodeList = []
+        //Create canvas for simulation
+        let canvasParent = document.getElementById('main-canvas')
+        this.canvas = createCanvas(canvasParent.clientWidth,canvasParent.clientHeight,WEBGL);
+        this.canvas.parent('main-canvas');
 
-const camera = new Camera(document.getElementById('main-canvas'))
-const simulation = new ProofOfStakeSimulation(15)
-const ui = new UI()
-ui.loadSimulation(simulation)
+        //Loading Shaders
+        this.assets["oceanShader"] = createShader(oceanVertexShader, oceanFragmentShader);
+        shader(this.assets["oceanShader"]);
+        this.assets["oceanShader"].setUniform('uResolution', [width, height]);
+        this.assets["oceanShader"].setUniform('fogDensity', 20000);
 
-let skybox1 = null, skybox2 = null, skybox3 = null, skybox4 = null, skybox5 = null, skybox6 = null;
+        //Creating camera
+        this.camera = new Camera(document.getElementById('main-canvas'))
 
-let torpedoModel = null
+        //Creating UI
+        this.ui = new UI(this);
+
+        //FPS
+        this.lastUpdate = Date.now()
+        this.fps = null
+        this.frameTimes = []
+        this.maxFrameTimes = 10
+    }
+
+    //Automaitcally called by constructor
+    loadAssets(){
+        //Images
+        this.assets["skybox1"] = loadImage('images/skybox1.jpg');
+        this.assets["skybox2"] = loadImage('images/skybox2.jpg');
+        this.assets["skybox3"] = loadImage('images/skybox3.jpg');
+        this.assets["skybox4"] = loadImage('images/skybox4.jpg');
+        this.assets["skybox5"] = loadImage('images/skybox-top.jpg');
+        this.assets["skybox6"] = loadImage('images/skybox-bottom.jpg');
+    
+        //Models
+        this.assets["torpedoModel"] = loadModel('models/torpedo.obj',true)
+        this.assets["stationModel"] = loadModel('models/station.obj',true)
+        console.log("All assets loaded")
+    }
+
+    openSimulation(simulation){
+        this.simulation = simulation
+        this.ui.loadSimulation(simulation)
+    }
+    
+}
+
+let simulator = null;
 
 function setup() {
-    let canvasParent = document.getElementById('main-canvas')
-    let canvas = createCanvas(canvasParent.clientWidth,canvasParent.clientHeight,WEBGL);
-    canvas.parent('main-canvas');
 
-    simulation.setup()
-
-    skybox1 = loadImage('images/skybox1.jpg');
-    skybox2 = loadImage('images/skybox2.jpg');
-    skybox3 = loadImage('images/skybox3.jpg');
-    skybox4 = loadImage('images/skybox4.jpg');
-    skybox5 = loadImage('images/skybox-top.jpg');
-    skybox6 = loadImage('images/skybox-bottom.jpg');
-
-    torpedoModel = loadModel('models/torpedo.obj',true)
+    simulator = new Simulator();
+    simulator.openSimulation(new MeshSimulation(simulator,10,0.5))
 }
 
 function draw() {
-    push()
-    camera.moveToCameraPOV()
 
-    //Draw background
+    let now = Date.now()
+    let frameTime = now - simulator.lastUpdate;
+    simulator.lastUpdate = now;
+    simulator.frameTimes.push(frameTime);
+    if (simulator.frameTimes.length > simulator.maxFrameTimes) {
+        simulator.frameTimes.shift();
+    }
+    let averageFrameTime = simulator.frameTimes.reduce((a, b) => a + b) / simulator.frameTimes.length;
+    simulator.fps = Math.round(1000 / averageFrameTime);
 
-    drawBackground()
+    simulator.simulation.simulate();
 
-
-
-    simulation.simulate()
-    simulation.draw()
+    push();
+    simulator.camera.moveToCameraPOV();
+    background(0);
+    simulator.simulation.draw();
+    simulator.simulation.simulate()
     pop()
 }
 
@@ -52,7 +90,7 @@ function windowResized() {
 function drawBackground(){
     noStroke()
     background(49,172,188);
-    texture(skybox1)
+    texture(skybox3)
     push()
     translate(0,0,-1500);
     plane(3000,3000)
@@ -63,7 +101,7 @@ function drawBackground(){
     translate(0,0,-1500);
     plane(3000,3000)
     pop()
-    texture(skybox3)
+    texture(skybox1)
     push()
     rotateY(Math.PI)
     translate(0,0,-1500);

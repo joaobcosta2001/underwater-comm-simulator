@@ -8,6 +8,7 @@
 		<title>Simulator</title>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 		<script defer src="scripts/variables.js"></script>
+		<script defer src="scripts/shaders.js"></script>
 		<script defer src="scripts/camera.js"></script>
 		<script defer src="scripts/base_classes.js"></script>
 		<script defer src="scripts/aux_functions.js"></script>
@@ -22,16 +23,33 @@
 	</head>
 	<body>
 		<div id="tool-bar">
+			<img id="tool-bar-icon" src="./images/tool-bar-icon.png" alt="Simulator Icon">
 			<button id="play-button" class="tool-bar-button"><img src="./images/play.svg" alt="Play Button" class="tool-bar-button-img"/></button>
 			<button id="stop-button" class="tool-bar-button"><img src="./images/stop.svg" alt="Stop Button" class="tool-bar-button-img"/></button>
 			<button id="restart-button" class="tool-bar-button"><img src="./images/restart.svg" alt="Restart Button" class="tool-bar-button-img"/></button>
 			<button id="speed-button" class="tool-bar-button"><img src="./images/speedx1.svg" alt="Speed Button" class="tool-bar-button-img" id="speed-button-img"/></button>
-
+			<button id="download-button" class="tool-bar-button"><img src="./images/download.svg" alt="Download Button" class="tool-bar-button-img" id="download-button-img"/></button>
 		</div>
 		<div id="main-div">
 			<div id="left-tab">
+				<div id="simulation-control">
+					<button id="simulation-control-title" class="title-bar title-bar-button">Simulation Control <img id="simulation-control-closed-indicator" src="./images/3dots.svg" alt="Show Simulation Control"/></button>
+					<div id="simulation-control-content">
+						<select id="simulation-type-select"></select>
+						<input type="number" id="simulation-node-amount" value="10" min="1"/>
+						<button id="reload-simulation-button">Reload Simulation</button>
+						<div id="physical-distance-multiplier-div">
+							<div id="physical-distance-multiplier-text">Physical Distance Multiplier: 10^1</div>
+							<input type="range" id="physical-distance-multiplier-slider" class="slider-style" min="-2" max="4" step="0.1" value="0" />
+						</div>
+						<div id="shader-fog-div">
+							<div id="shader-fog-text">Fog Density: 10%</div>
+							<input type="range" id="shader-fog-slider" class="slider-style" min="0" max="100" step="1" value="0" />
+						</div>
+					</div>
+				</div>
 				<div id="metrics">
-					<button id="metrics-title" class="title-bar title-bar-button">Simulation metrics <img id="metrics-closed-indicator" src="./images/3dots.svg" alt="Show Metrics"/></button>
+					<button id="metrics-title" class="title-bar title-bar-button">Simulation Metrics <img id="metrics-closed-indicator" src="./images/3dots.svg" alt="Show Metrics"/></button>
 					<div id="metrics-content">
 						Simulation time: <span id="simulation-time">0</span><br/>
 						Node count: <span id="node-count">0</span>
@@ -53,7 +71,10 @@
 					</div>
 					<div id="node-details">
 						<div id="node-details-title"  class="title-bar">Node Details</div>
-						<div id="node-details-content" class="node-details-content-empty">Select a node to inspect</div>
+						<div id="node-details-body">
+							<div id="node-details-content" class="node-details-content-empty">Select a node to inspect</div>
+							<div id="node-details-events"></div>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -20,13 +20,14 @@ class MessageBuffer{
     push(message){
         this.messages.push(message)
         this.current_occupancy += message.length
-        this.total_message_count+=1;
         this.length += 1
+        this.total_message_count+=1;
         this.total_message_size += message.length
         this.avg_message_size = this.total_message_size/this.total_message_count
     }
 
     checkAlmostFull(){
+        //console.log(`Size: ${this.size-this.avg_message_size} Current Occupancy: ${this.current_occupancy}`)
         return this.size-this.avg_message_size < this.current_occupancy
     }
 }
@@ -40,11 +41,18 @@ class BlockchainTransaction{
     }
 }
 
-class ProofOfStakeTransaction{
-    constructor(sendingNode,messageList,fee){
-        this.sendingNode = sendingNode
-        this.messageList = messageList
-        this.fee = fee
+class ProofOfStakeTransaction extends BlockchainTransaction{
+    constructor(sendingNode,messageList,id,fee){
+        super(sendingNode,messageList,id)
+        this.fee = fee;
+    }
+}
+
+class ProofOfStakeTransferTransaction extends ProofOfStakeTransaction{
+    constructor(sendingNode,receivingNode,amount,id,fee){
+        super(sendingNode,[],id,fee)
+        this.receivingNode = receivingNode
+        this.amount = amount
     }
 }
 
@@ -78,12 +86,14 @@ class LocalBlockchain{
         return null
     }
 
+
     addBlock(block){
-        if(this.findBlock(block.id) == null){
-            this.blocks.splice(block.id,0,block)
-            this.id = this.blocks[this.blocks.length-1].id
-            this.length = this.blocks.length
+        if(this.findBlock(block.id) != null){
+            return
         }
+        this.blocks.splice(block.id,0,block)
+        this.id = this.blocks[this.blocks.length-1].id
+        this.length = this.blocks.length
     }
 
     getUnkownBlockIds(){
@@ -104,6 +114,45 @@ class LocalBlockchain{
     }
 }
 
+class LocalProofOfStakeBlockchain extends LocalBlockchain{
+    constructor(node,genesisNode,balance){
+        super(node,genesisNode)
+        this.currentBalances = {}
+        this.currentBalances[node] = balance
+    }
 
+    
+    updateCurrentBalances(block){
+        for (const transaction of block.transactions){
+            if (transaction instanceof ProofOfStakeTransferTransaction){
+                this.currentBalances[transaction.sendingNode] -= transaction.amount + transaction.fee
+                this.currentBalances[transaction.receivingNode] += transaction.amount
+            }
+            if (transaction instanceof ProofOfStakeTransaction){
+                if( this.node == transaction.sendingNode){
+                }
+                this.currentBalances[transaction.sendingNode] -= transaction.fee
+                this.currentBalances[block.proposer] += transaction.fee
+            }
+        }
+    }
+
+    addBlock(block){
+        super.addBlock(block)
+        this.updateCurrentBalances(block)
+    }
+
+    
+    getNodeBalance(nodeName){
+        for (const node of Object.keys(this.currentBalances)){
+            if (node.name == nodeName){
+                return this.currentBalances[node]
+            }
+        }
+
+        return null;
+    }
+
+}
 
 

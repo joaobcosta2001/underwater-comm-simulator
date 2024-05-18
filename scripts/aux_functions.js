@@ -105,6 +105,7 @@ function disp(text,toggleVariable){
 }
 
 
+//DANGER This function has shown performance issues in the past
 function drawDebugAxis(){
     //DEBUG AXIS
     stroke(255,0,0)
