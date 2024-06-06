@@ -67,15 +67,18 @@ class UI{
             location.reload()
         })
 
+
         this.allEventsList = []
-        this.downloadButton = document.getElementById("download-button")
-        this.downloadButton.addEventListener("click",()=>{
+        //filename without ".csv"
+        this.downloadEvents = (filename)=>{
             let csvFileContent = "Timestamp,Node,Description\n"
             for (const event of this.allEventsList){
                 if (event.node == null){
-                    csvFileContent += `${((event.timestamp-this.simulator.simulation.startTime)/1000).toFixed(4)},,${event.description}\n`
+                    csvFileContent += `${((event.timestamp)/1000).toFixed(4)},,${event.description}\n`
+                }else if(typeof event.node === "string"){
+                    csvFileContent += `${((event.timestamp)/1000).toFixed(4)},${event.node},${event.description}\n`
                 }else{
-                    csvFileContent += `${((event.timestamp-this.simulator.simulation.startTime)/1000).toFixed(4)},${event.node.name},${event.description}\n`
+                    csvFileContent += `${((event.timestamp)/1000).toFixed(4)},${event.node.name},${event.description}\n`
                 }
             }
             let blob = new Blob([csvFileContent], { type: 'text/csv;charset=utf-8;' });
@@ -83,11 +86,15 @@ class UI{
             let link = document.createElement('a');
             link.setAttribute('href', url);
             const currentDate = new Date()
-            link.setAttribute('download', `report-${currentDate.getFullYear()}-${currentDate.getMonth()+1}-${currentDate.getDate()}-${currentDate.getHours()}-${currentDate.getMinutes()}-${currentDate.getSeconds()}.csv`);
+            link.setAttribute('download', filename==null?`report-${currentDate.getFullYear()}-${currentDate.getMonth()+1}-${currentDate.getDate()}-${currentDate.getHours()}-${currentDate.getMinutes()}-${currentDate.getSeconds()}.csv`:filename+".csv");
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        this.downloadButton = document.getElementById("download-button")
+        this.downloadButton.addEventListener("click",()=>{
+            this.downloadEvents(null)
         })
 
 
@@ -112,7 +119,7 @@ class UI{
             }
             this.simulationControlOpen = !this.simulationControlOpen
         })
-        this.simulationOptions = ["Mesh", "Mule","Pipeline"]
+        this.simulationOptions = ["Mesh", "Static Mesh", "Mule","Pipeline"]
         this.simulationSelector = document.getElementById("simulation-type-select")
         this.simulationOptions.forEach((option)=>{
             let optionElement = document.createElement("option")
@@ -128,6 +135,8 @@ class UI{
             let simulationType = this.simulationSelector.value
             if (simulationType == "Mesh"){
                 this.simulator.simulation = new MeshSimulation(this.simulator,nodeAmount,0.9)
+            }else if (simulationType == "Static Mesh"){
+                this.simulator.simulation = new StaticMeshSimulation(this.simulator,nodeAmount)
             }else if (simulationType == "Mule"){
                 this.simulator.simulation = new MuleSimulation(this.simulator,nodeAmount,0.5)
             }else if (simulationType == "Pipeline"){
@@ -145,12 +154,18 @@ class UI{
         }
 
 
-        this.fogDensityText = document.getElementById("shader-fog-text")
-        this.fogDensitySlider = document.getElementById("shader-fog-slider")
-        this.fogDensitySlider.oninput = ()=> {
-            let density = this.fogDensitySlider.value
-            this.simulator.assets["oceanShader"].setUniform('fogDensity', 50000/Math.log(density+1))
-            this.fogDensityText.innerHTML = `Fog Density: ${density}%`
+        this.messageDelayText = document.getElementById("message-delay-text")
+        this.messageDelaySlider = document.getElementById("message-delay-slider")
+        this.messageDelaySlider.oninput = ()=> {
+            MESSAGE_DELAY_MULTIPLIER = Math.pow(10,this.messageDelaySlider.value)
+            this.messageDelayText.innerHTML = `Message Delay Multiplier: 10^${this.messageDelaySlider.value}`
+        }
+
+        this.broadcastPullText = document.getElementById("broadcast-pull-text")
+        this.broadcastPullSlider = document.getElementById("broadcast-pull-slider")
+        this.broadcastPullSlider.oninput = ()=> {
+            BROADCAST_PULL_PERIOD = this.broadcastPullSlider.value * 1000
+            this.broadcastPullText.innerHTML = `Broadcast Pull Period: ${this.broadcastPullSlider.value}s`
         }
 
         
@@ -225,7 +240,7 @@ class UI{
                         nodeDetails += `${fieldName}: ${field.x.toFixed(3)}, ${field.y.toFixed(3)}, ${field.z.toFixed(3)}<br/>`
                     }
                 }else{
-                    console.error(`Property type found which parser doesnt know how to process (${typeof field})` )
+                    console.error(`Property type found which parser doesnt know how to process (${fieldName}:${typeof field})` )
                     continue
                 }
             }
@@ -249,12 +264,13 @@ class UI{
             if(this.selectedNode != null){
                 let eventText = ""
                 for (const event of this.selectedNode.events){
-                    eventText += `[${((event.timestamp - this.simulator.simulation.startTime)/1000).toFixed(3)}s] ${event.description}<br/>`
+                    eventText += `[${((event.timestamp)/1000).toFixed(3)}s] ${event.description}<br/>`
                 }
                 this.nodeDetailsEvents.innerHTML = eventText
             }
         }
 
+        this.nodeListContent.innerHTML = ""
         for (const node of this.simulator.simulation.nodeList){
             let nodeDiv = document.createElement("div")
             nodeDiv.className = "node-list-element-div"
@@ -326,43 +342,59 @@ class UI{
 
         this.updateLeftTabIntervalID = setInterval(()=>{
             //Update metrics
+
+            //Up to date nodes
             let upToDateNodes = 0
             let totalAwareness = 0
             for (const node of this.simulator.simulation.nodeList){
-                if (node.protocolList[1].blockchain.blocks.length == this.simulator.simulation.globalBlockchain.blocks.length-1){
+                if (node.protocolList[1].blockchain.blocks.length == this.simulator.simulation.globalBlockchain.blocks.length){
                     upToDateNodes += 1;
                 }
-                totalAwareness += node.protocolList[1].blockchain.blocks.length/(this.simulator.simulation.globalBlockchain.blocks.length-1)
-            }
-            let averageTimeToAddMessageToBlockchain = "";
-            if(this.simulation.messagesAddedToBlockchain == 0){
-                averageTimeToAddMessageToBlockchain = "Unknown"
-            }else{
-                averageTimeToAddMessageToBlockchain = (this.simulation.messagesAddedToBlockchainTotalTime/this.simulation.messagesAddedToBlockchain/1000).toFixed(3) + "s"
+                totalAwareness += node.protocolList[1].blockchain.blocks.length/(this.simulator.simulation.globalBlockchain.blocks.length)
             }
 
+            //Calculate average node degree
+            
             for(const node1 of this.simulator.simulation.nodeList){
+                let node1_degree = 0
                 for (const node2 of this.simulator.simulation.nodeList){
                     if (node1 != node2){
                         if(node1.channels[0].withinRange(node2)){
-                            this.totalNodeDegree += 1
+                            node1_degree += 1
                         }
                     }
                 }
+                node1.degree = node1_degree
+                this.totalNodeDegree += node1_degree
                 this.nodeDegreeSamples += 1
             }
+            
 
-            this.addNodeEvent(null,`${this.simulator.simulation.messagesAddedToBlockchain == 0?"0":(this.simulator.simulation.messagesAddedToBlockchain/(Date.now()-this.simulator.simulation.startTime)*1000).toFixed(3)}`)
+
+            //Time to Blockchain
+            const T2Bstatistics = this.simulator.simulation.getTimeToBlockchainStatistics()
+            const [T2Bmin, T2Bq1, T2Bq2, T2Bq3, T2Bmax] = T2Bstatistics;
+
+
+            //T2B
+            //this.addNodeEvent(null,`${T2Bmin/1000}, ${T2Bq1/1000}, ${T2Bq2/1000}, ${T2Bq3/1000}, ${T2Bmax/1000}`)
+            //Throughput
+            //this.addNodeEvent(null,`${this.simulator.simulation.messagesAddedToBlockchain == 0?"0":(this.simulator.simulation.messagesAddedToBlockchain/this.simulator.simulation.getTime()*1000).toFixed(3)}`)
+
 
             this.metricsContent.innerHTML =
                 `FrameRate: ${this.simulator.fps !== null?this.simulator.fps:"?"}fps<br/>
-                Simulation Time: ${(this.simulator.simulation.getElapsedTime()/1000).toFixed(3)}s<br/>
+                Simulation Time: ${(this.simulator.simulation.getTime()/1000).toFixed(3)}s<br/>
                 Node Count: ${this.simulator.simulation.nodeList.length}<br/>
                 Nodes Completely Aware: ${upToDateNodes}/${this.simulator.simulation.nodeList.length}<br/>
                 Average Node Awareness: ${(totalAwareness/this.simulator.simulation.nodeList.length*100).toFixed(2)}%<br/>
-                Average Time to Blockchain: ${averageTimeToAddMessageToBlockchain}<br/>
+                Time to Blockchain Min: ${T2Bmin/1000}<br/>
+                Time to Blockchain Q1: ${T2Bq1/1000}<br/>
+                Time to Blockchain Median: ${T2Bq2/1000}<br/>
+                Time to Blockchain Q3: ${T2Bq3/1000}<br/>
+                Time to Blockchain Max: ${T2Bmax/1000}<br/>
                 Average Node Degree: ${(this.totalNodeDegree/this.nodeDegreeSamples).toFixed(3)}<br/>
-                Message Throughput: ${this.simulator.simulation.messagesAddedToBlockchain == 0?"Unknown":(this.simulator.simulation.messagesAddedToBlockchain/(Date.now()-this.simulator.simulation.startTime)*1000).toFixed(3)} mgs/s<br/>`
+                Message Throughput: ${this.simulator.simulation.messagesAddedToBlockchain == 0?"Unknown":(this.simulator.simulation.messagesAddedToBlockchain/this.simulator.simulation.getTime()*1000).toFixed(3)} mgs/s<br/>`
                 
 
             /*
@@ -409,7 +441,7 @@ class UI{
             blockTitle.innerHTML = `Block ${block.id}`
             let blockInfo = document.createElement("div")
             blockInfo.className = "bc-state-block-info"
-            blockInfo.innerHTML = `Transactions: ${block.transactions.length}<br/>Proposer: ${block.proposer == null?"GENESIS":block.proposer.name}<br/>Next Proposer: ${block.nextProposer.name}`
+            blockInfo.innerHTML = `Transactions: ${block.transactions.length}<br/>Proposer: ${block.proposer == null?"GENESIS":block.proposer.name}<br/>Next Proposer: ${block.nextProposerBuffer[block.nextProposerBufferIndex].name}`
             if (!this.openBlocksList.includes(block)){
                 blockInfo.style.display = "none"
             }
@@ -435,7 +467,7 @@ class UI{
             this.allEventsList = []
         }
         this.allEventsList.push(newNodeEvent)
-        if (node == null){
+        if (node == null || typeof node === "string"){
             return
         }
         if(node.events == null){
@@ -450,6 +482,14 @@ class UI{
             },timeout)
         }
     }
+
+    clearNodeEvents(){
+        this.allEventsList = []
+        for (const node of this.simulator.simulation.nodeList){
+            node.events = []
+        }
+        this.updateNodeEvents()
+    }
 }
 
 
@@ -460,7 +500,7 @@ class NodeEvent{
         this.node = node;
         this.description = description;
         this.timeout = timeout; //In milliseconds
-        this.timestamp = Date.now()
+        this.timestamp = simulator.simulation.getTime()
     }
 }
 

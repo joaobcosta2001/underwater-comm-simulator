@@ -1,0 +1,28 @@
+{
+    "nodes":[
+        {
+            "name": "Node A",
+            "type":"stationary",
+            "x":0,
+            "y":0,
+            "z":577,
+            "isGenesis":true
+        },
+        {
+            "name": "Node B",
+            "type":"stationary",
+            "x":-500,
+            "y":0,
+            "z":-289,
+            "isGenesis":false
+        },
+        {
+            "name": "Node C",
+            "type":"stationary",
+            "x":500,
+            "y":0,
+            "z":-289,
+            "isGenesis":false
+        }
+    ]
+}

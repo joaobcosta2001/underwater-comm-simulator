@@ -28,7 +28,7 @@ class Simulator{
         this.maxFrameTimes = 10
     }
 
-    //Automaitcally called by constructor
+    //Automatically called by constructor
     loadAssets(){
         //Images
         this.assets["skybox1"] = loadImage('images/skybox1.jpg');
@@ -48,6 +48,37 @@ class Simulator{
         this.simulation = simulation
         this.ui.loadSimulation(simulation)
     }
+
+    setStartingSimulation(){
+
+        MESSAGE_LIFE_AFTER_ARRIVAL = 10 //In milliseconds
+        MINIMUM_TRANSACTIONS_IN_BLOCK = 30
+        MESSAGE_BUFFER_SIZE = 5000 //5 messages per transaction
+        DASHBOARD_UPDATE_PERIOD = 1000 //In milliseconds
+        PHYSICAL_DISTANCE_MULTIPLIER = 1
+        TIME_MULTIPLIER = 2
+        MESSAGE_DELAY_MULTIPLIER = 0.5
+        BROADCAST_PULL_PERIOD = 500
+        let SIMULATION_STOP_BLOCK_COUNT = 100
+
+        this.simulation = new PresetSimulation(this,"dodecahedron-1-malicious.json")
+        this.ui.loadSimulation(this.simulation)
+        this.ui.clearNodeEvents()
+        this.simulation.simulate()
+        this.checkSimulationEnd = ()=>{
+            if (this.simulation.globalBlockchain.blocks.length > SIMULATION_STOP_BLOCK_COUNT){
+                this.ui.downloadEvents(`MT-${MINIMUM_MESSAGES_IN_TRANSACTION}-TB-${MINIMUM_TRANSACTIONS_IN_BLOCK}`)
+                let audio = new Audio('/assets/ping.mp3');
+                audio.play();
+                let throughput = (this.simulation.messagesAddedToBlockchain/this.simulation.getTime()*1000).toFixed(3)
+                //this.setNextSimulationParameters(throughput)
+            }else{
+                setTimeout(this.checkSimulationEnd,1000)
+            }
+        }
+        this.checkSimulationEnd()
+
+    }
     
 }
 
@@ -56,7 +87,7 @@ let simulator = null;
 function setup() {
 
     simulator = new Simulator();
-    simulator.openSimulation(new MeshSimulation(simulator,10,0.5))
+    simulator.setStartingSimulation()
 }
 
 function draw() {

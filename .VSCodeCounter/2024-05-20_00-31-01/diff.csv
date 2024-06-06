@@ -1,0 +1,14 @@
+"filename", "language", "CSS", "HTML", "JavaScript", "comment", "blank", "total"
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\index.html", "HTML", 0, 8, 0, 0, 0, 8
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\base_classes.js", "JavaScript", 0, 0, 66, 1, 9, 76
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\blockchain_layer.js", "JavaScript", 0, 0, -1, 0, 0, -1
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\camera.js", "JavaScript", 0, 0, 1, 0, 0, 1
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\blockchain_layer_implementations.js", "JavaScript", 0, 0, 29, 2, 3, 34
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\node_implementations.js", "JavaScript", 0, 0, -3, 0, 0, -3
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\simulation_implementations.js", "JavaScript", 0, 0, 46, 1, 10, 57
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\main.js", "JavaScript", 0, 0, -3, 0, -3, -6
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\shaders.js", "JavaScript", 0, 0, 6, 0, 1, 7
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\ui.js", "JavaScript", 0, 0, 46, 8, 10, 64
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\variables.js", "JavaScript", 0, 0, 3, 1, 4, 8
+"c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\styles.css", "CSS", 15, 0, 0, 0, 4, 19
+"Total", "-", 15, 8, 190, 13, 38, 264

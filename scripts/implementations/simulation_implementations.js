@@ -36,24 +36,6 @@ class MeshSimulation extends Simulation{
 
 
         this.genesisNode = null;
-        this.globalBlockchain = new LocalBlockchain(null,false);
-
-
-        //Overriding globalBlockchain addBlock method to track messages added to blockchain
-        this.messagesAddedToBlockchain = 0
-        this.messagesAddedToBlockchainTotalTime = 0
-        let originalAddBlock = this.globalBlockchain.addBlock;
-        this.globalBlockchain.addBlock = (block) => {
-            originalAddBlock.call(this.globalBlockchain, block);
-            for (const transaction of block.transactions){
-                for (const message of transaction.messageList){
-                    console.log("Adding message to blockchain")
-                    this.messagesAddedToBlockchain += 1;
-                    const delta = (Date.now()-message.creationTime)*TIME_MULTIPLIER
-                    this.messagesAddedToBlockchainTotalTime += delta;
-                }
-            }
-        };
 
         for (let i = 0; i < moving_nodes; i++){
             let new_node = null;
@@ -91,15 +73,51 @@ class MeshSimulation extends Simulation{
 
 
 
+class StaticMeshSimulation extends Simulation{
+    constructor(simulator,node_amount){
+        super(simulator)
+
+        this.genesisNode = null;
+
+        for(let i = 0; i < node_amount; i++){
+            if (i == 0){
+                let new_node = new ProofOfStakeNode_Stationary(this,`Stationary Node ${i}`,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,true)
+                this.genesisNode = new_node
+                this.nodeList.push(new_node)
+            }
+            let new_node = new ProofOfStakeNode_Stationary(this,`Stationary Node ${i}`,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,(-1000 + Math.random() * 2000)*PHYSICAL_DISTANCE_MULTIPLIER,false)
+            this.nodeList.push(new_node)
+        }
+
+        this.genesisNode.protocolList[1].initializeBlockchain()
+    }
+
+
+    draw(){
+        for(const node of this.nodeList){
+            node.draw()
+        }
+        translate(0,1000*PHYSICAL_DISTANCE_MULTIPLIER,0)
+        rotateX(HALF_PI)
+        noStroke()
+        fill(255)
+        this.simulator.assets["oceanShader"].setUniform("uFloorPlane",true)
+        plane(10000*PHYSICAL_DISTANCE_MULTIPLIER)
+        this.simulator.assets["oceanShader"].setUniform("uFloorPlane",false)
+
+    }
+}
+
+
+
 class PipelineSimulation extends Simulation{
     constructor(simulator,node_amount){
         super(simulator)
 
         this.genesisNode = null;
 
-        this.globalBlockchain = new LocalBlockchain(null,false)
         for(let i = 0; i < node_amount; i++){
-            let new_node = new ProofOfStakeNode_Stationary(this,`Stationary Node ${i}`,(-3000 + i/node_amount *  6000)*PHYSICAL_DISTANCE_MULTIPLIER,1000*PHYSICAL_DISTANCE_MULTIPLIER,(-100 + Math.random() * 200)*PHYSICAL_DISTANCE_MULTIPLIER,i==0)
+            let new_node = new ProofOfStakeNode_Stationary(this,`Stationary Node ${i}`,(-3000 + i/node_amount *  6000)*PHYSICAL_DISTANCE_MULTIPLIER,0,(-100 + Math.random() * 200)*PHYSICAL_DISTANCE_MULTIPLIER,i==0)
             if (i==0){
                 this.genesisNode = new_node
             }
@@ -129,7 +147,6 @@ class MuleSimulation extends Simulation{
 
         this.genesisNode = null;
 
-        this.globalBlockchain = new LocalBlockchain(null,false)
 
         for (let i = 0; i < moving_nodes; i++){
             let new_node = null;
@@ -157,5 +174,54 @@ class MuleSimulation extends Simulation{
             node.draw()
         }
 
+    }
+}
+
+
+class PresetSimulation extends Simulation{
+    constructor(simulator, simulation_file){
+        super(simulator)
+
+        this.genesisNode = null;
+
+        fetch("simulation-presets/" + simulation_file)
+        .then(response =>{
+            if (!response.ok){
+                throw new Error("HTTP error " + response.status)
+            }
+            return response.json()
+        })
+        .then(data =>{
+            if (data["nodes"] == null){
+                throw new Error("Simulation file does not contain nodes")
+            }
+            for (const node_info of data["nodes"]){
+                let new_node = null;
+                let malicious = node_info["isMalicious"]
+                malicious==undefined?malicious=false:null
+                if (node_info["type"] == "stationary"){
+                    new_node = new ProofOfStakeNode_Stationary(this,node_info["name"],node_info["x"],node_info["y"],node_info["z"],node_info["isGenesis"],malicious)
+                }else if (node_info["type"] == "moving"){
+                    new_node = new ProofOfStakeNode_RandomMovement(this,node_info["name"],node_info["x"],node_info["y"],node_info["z"],node_info["isGenesis"],malicious)
+                }else{
+                    throw new Error("Invalid node type")
+                }
+                if (node_info["isGenesis"]){
+                    if (this.genesisNode != null){
+                        throw new Error("Multiple genesis nodes found")
+                    }
+                    this.genesisNode = new_node
+                }
+                this.nodeList.push(new_node)
+            }
+            this.genesisNode.protocolList[1].initializeBlockchain()
+
+            //Beacuse fetch works as a promisse we need to load the simulation after the nodes are loaded
+            this.simulator.ui.loadSimulation(this)
+
+        })
+        .catch(e => {
+            console.error('An error occurred while fetching the simulation file:', e);
+        });
     }
 }

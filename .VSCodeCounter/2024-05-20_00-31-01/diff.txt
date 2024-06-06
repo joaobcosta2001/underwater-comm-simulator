@@ -1,0 +1,42 @@
+Date : 2024-05-20 00:31:01
+Directory : c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator
+Total : 12 files,  213 codes, 13 comments, 38 blanks, all 264 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JavaScript |         10 |        190 |         13 |         34 |        237 |
+| CSS        |          1 |         15 |          0 |          4 |         19 |
+| HTML       |          1 |          8 |          0 |          0 |          8 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                         | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                            |         12 |        213 |         13 |         38 |        264 |
+| . (Files)                                                                                                                    |          2 |         23 |          0 |          4 |         27 |
+| scripts                                                                                                                      |         10 |        190 |         13 |         34 |        237 |
+| scripts (Files)                                                                                                              |          7 |        118 |         10 |         21 |        149 |
+| scripts\implementations                                                                                                      |          3 |         72 |          3 |         13 |         88 |
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                                                                     | language   | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\index.html                                                  | HTML       |          8 |          0 |          0 |          8 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\base_classes.js                                     | JavaScript |         66 |          1 |          9 |         76 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\blockchain_layer.js                                 | JavaScript |         -1 |          0 |          0 |         -1 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\camera.js                                           | JavaScript |          1 |          0 |          0 |          1 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\blockchain_layer_implementations.js | JavaScript |         29 |          2 |          3 |         34 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\node_implementations.js             | JavaScript |         -3 |          0 |          0 |         -3 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\implementations\simulation_implementations.js       | JavaScript |         46 |          1 |         10 |         57 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\main.js                                             | JavaScript |         -3 |          0 |         -3 |         -6 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\shaders.js                                          | JavaScript |          6 |          0 |          1 |          7 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\ui.js                                               | JavaScript |         46 |          8 |         10 |         64 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\scripts\variables.js                                        | JavaScript |          3 |          1 |          4 |          8 |
+| c:\Users\João Costa\Desktop\aulas\tese\underwater-comm-simulator\styles.css                                                  | CSS        |         15 |          0 |          4 |         19 |
+| Total                                                                                                                        |            |        213 |         13 |         38 |        264 |
++------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

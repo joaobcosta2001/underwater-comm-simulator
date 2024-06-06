@@ -1,6 +1,6 @@
 class Camera{
     constructor(canvas){
-        perspective(PI / 3, width / height, 1, 100000);
+        perspective(PI / 3, width / height, 1, 10000000);
         this.position = new Vec3(0,0,-1000)
         this.rotation = new Vec3(0,0,0)
         this.cameraSpeed = 10;

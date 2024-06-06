@@ -1,0 +1,157 @@
+{
+    "nodes":[
+        {
+            "name": "Node 1",
+            "type":"stationary",
+            "x":-1000,
+            "y":-1000,
+            "z":-1000,
+            "isGenesis":true
+        },{
+            "name": "Node 2",
+            "type":"stationary",
+            "x":1000,
+            "y":-1000,
+            "z":-1000,
+            "isGenesis":false
+        },{
+            "name": "Node 3",
+            "type":"stationary",
+            "x":-1000,
+            "y":1000,
+            "z":-1000,
+            "isGenesis":false
+        },{
+            "name": "Node 4",
+            "type":"stationary",
+            "x":1000,
+            "y":1000,
+            "z":-1000,
+            "isGenesis":false
+        },{
+            "name": "Node 5",
+            "type":"stationary",
+            "x":-1000,
+            "y":-1000,
+            "z":1000,
+            "isGenesis":false
+        },{
+            "name": "Node 6",
+            "type":"stationary",
+            "x":1000,
+            "y":-1000,
+            "z":1000,
+            "isGenesis":false
+        },{
+            "name": "Node 7",
+            "type":"stationary",
+            "x":-1000,
+            "y":1000,
+            "z":1000,
+            "isGenesis":false
+        },{
+            "name": "Node 8",
+            "type":"stationary",
+            "x":1000,
+            "y":1000,
+            "z":1000,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 9",
+            "type":"stationary",
+            "x":0,
+            "y":1618,
+            "z":618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 10",
+            "type":"stationary",
+            "x":0,
+            "y":-1618,
+            "z":618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 11",
+            "type":"stationary",
+            "x":0,
+            "y":1618,
+            "z":-618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 12",
+            "type":"stationary",
+            "x":0,
+            "y":-1618,
+            "z":-618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 13",
+            "type":"stationary",
+            "x":618,
+            "y":0,
+            "z":1618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 14",
+            "type":"stationary",
+            "x":-618,
+            "y":0,
+            "z":1618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 15",
+            "type":"stationary",
+            "x":618,
+            "y":0,
+            "z":-1618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 16",
+            "type":"stationary",
+            "x":-618,
+            "y":0,
+            "z":-1618,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 17",
+            "type":"stationary",
+            "x":1618,
+            "y":618,
+            "z":0,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 18",
+            "type":"stationary",
+            "x":-1618,
+            "y":618,
+            "z":0,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 19",
+            "type":"stationary",
+            "x":1618,
+            "y":-618,
+            "z":0,
+            "isGenesis":false
+        },
+        {
+            "name": "Node 20",
+            "type":"stationary",
+            "x":-1618,
+            "y":-618,
+            "z":0,
+            "isGenesis":false
+        }
+    ]
+}

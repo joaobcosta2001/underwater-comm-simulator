@@ -14,6 +14,9 @@ class RandomMessageApplicationProtocol extends Protocol{
         }
         
         this.handleMessageReceive = (received_message)=>{
+            if (received_message.content == "DISCOVER"){
+                console.log(`${this.node.name} Received discover in app layer`)
+            }
             if(received_message.content === "DISCOVER_REPLY"){
                 this.node.addKnownNode(received_message.sender);
             }

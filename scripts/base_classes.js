@@ -17,17 +17,24 @@ class Protocol{
 
 class Message{
     constructor(sender,receiver, content){
+        if (sender == null){
+            console.error("Message was created with a null sender! (sender=" + sender + ",receiver="+(receiver!=null?receiver.name:"null")+",content="+content+")")
+            return null
+        }
         this.sender = sender;
         this.receiver = receiver;
         this.content = content;
+        /*
         if (typeof this.content === "string"){
             this.length = 128+128+this.content.length*8
         }else if (typeof this.content === "object"){
             this.length = 128+128+100*8
         }else{
             this.length = 128+128+256
-        }
-        this.creationTime = Date.now();
+        }*/
+        //this.length = 2048 //Setting to very high length
+        this.length = 1000 //Setting to very low length
+        this.creationTime = this.sender.simulation.getTime();
         this.sendingTime = null;
         this.arrivalTime = null;
     }
@@ -53,6 +60,7 @@ class Channel{
         return (randomValue < 1-0.5/Math.pow(this.half_distance,2)*Math.pow(distance,2)) 
     }
 
+    //Whether a node is withing distance
     withinRange(node2){
         return Vec3.distance(this.node.position, node2.position) < 1.4142 * this.half_distance //sqrt(2)
     }
@@ -67,13 +75,13 @@ class Channel{
         }
         //Calculate delay
         let delay = distance / this.propagation_speed + message.length / this.transfer_speed;
-        message.sendingTime = Date.now();
+        message.sendingTime = message.sender.simulation.getTime();
         //Send message with calculated delay
         setTimeout(()=>{
             disp(`[${this.node.name}][CHANNEL ${this.name}] Message ${message.content} arrived to ${message.receiver.name}`,CHANNEL_VERBOSE)
             message.receiver.handleMessageReceive(message)
             message.receiver.received_messages_buffer.push(message);
-            message.arrivalTime = Date.now()
+            message.arrivalTime = message.sender.simulation.getTime();
         },delay*1000/TIME_MULTIPLIER)
         return true;
     }
@@ -110,7 +118,8 @@ class Node{
         this.propertiesToDisplay = ["name","position",["received_messages_buffer","length"],["knownNodes","length"]]
         this.events = []
         this.model = null
-        this.lastSimulateTimestamp = Date.now()
+        this.lastSimulateTimestamp = this.simulation.getTime()
+        this.id = this.simulation.getNextID()
     }
 
     addProtocol(protocol,i = -1){
@@ -185,7 +194,7 @@ class Node{
         box()
         pop()
         for (const message of this.received_messages_buffer){
-            stroke(Math.floor(255*(1-(Date.now()-message.arrivalTime)/1000)),0,0)
+            stroke(Math.floor(255*(1-(this.simulation.getTime()-message.arrivalTime)/1000)),0,0)
             line(message.sender.position.x,message.sender.position.y,message.sender.position.z,message.receiver.position.x,message.receiver.position.y,message.receiver.position.z)
         }
         stroke(0,0,0)
@@ -200,7 +209,7 @@ class Node{
     }
 
     simulate(){
-        let now = Date.now()
+        let now = this.simulation.getTime()
         let deltaTime = (now-this.lastSimulateTimestamp)*TIME_MULTIPLIER
         this.lastSimulateTimestamp = now
         this.simulateMessageExchange(deltaTime)
@@ -215,11 +224,13 @@ class Simulation{
         this.simulator = simulator
         this.nodeList = []
         this.speed = 1
-        this.startTime = Date.now()
-        this.lastRegisteredTime = Date.now()
+        let now = Date.now()
+        this.startTime = now
+        this.lastRegisteredTime = now
         this.totalSimulationTime = 0 //In milliseconds
         this.state = "playing"
         this.ui = null;
+        this.currentID = 0;
 
         this.pausedDueToVisibilityChange = false
         document.addEventListener('visibilitychange', () => {
@@ -230,6 +241,35 @@ class Simulation{
                 this.play();
             }
         });
+
+        
+        this.globalBlockchain = new LocalBlockchain(null,false);
+        //Overriding globalBlockchain addBlock method to track messages added to blockchain
+        this.messagesAddedToBlockchain = 0
+        this.messagesAddedToBlockchainTotalTime = 0
+        this.messageTimes = []
+        let originalAddBlock = this.globalBlockchain.addBlock;
+        this.globalBlockchain.addBlock = (block) => {
+            console.log("Block being added to blockchain")
+            originalAddBlock.call(this.globalBlockchain, block);
+            for (const transaction of block.transactions){
+                for (const message of transaction.messageList){
+                    this.messagesAddedToBlockchain += 1;
+                    const delta = (this.getTime()-message.creationTime)
+                    this.messagesAddedToBlockchainTotalTime += delta;
+                    this.messageTimes.push(delta);
+                }
+            }
+        };
+        this.getTimeToBlockchainStatistics = () => {
+            this.messageTimes.sort((a, b) => a - b); // Sort delta times in ascending order
+            let min = this.messageTimes[0];
+            let q1 = this.messageTimes[Math.floor(this.messageTimes.length * 0.25)];
+            let q2 = this.messageTimes[Math.floor(this.messageTimes.length * 0.5)];
+            let q3 = this.messageTimes[Math.floor(this.messageTimes.length * 0.75)];
+            let max = this.messageTimes[this.messageTimes.length - 1];
+            return [min, q1, q2, q3, max];
+        }
     }
 
     pause(){
@@ -240,7 +280,7 @@ class Simulation{
         this.lastRegisteredTime = Date.now()
     }
 
-    getElapsedTime(){
+    getTime(){
         return this.totalSimulationTime
     }
 
@@ -275,5 +315,20 @@ class Simulation{
         }
         return null
     }
+
+    getNodeById(id){
+        for (const node of this.nodeList){
+            if (node.id == id){
+                return node
+            }
+        }
+        return null
+    }
+
+    getNextID(){
+        this.currentID += 1
+        return this.currentID-1
+    }
+
 
 }

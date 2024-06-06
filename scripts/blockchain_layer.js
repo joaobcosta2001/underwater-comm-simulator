@@ -1,11 +1,7 @@
 class MessageBuffer{
-    constructor(size){
-        this.size = size //in bits
-        this.current_occupancy = 0
+    constructor(bitLimit){
+        this.bitLimit = bitLimit
         this.messages = []
-        this.total_message_count = 0
-        this.total_message_size = 0
-        this.avg_message_size = 0
         this.length = 0
     }
 
@@ -13,31 +9,27 @@ class MessageBuffer{
         let mess_buf = this.messages
         this.messages = []
         this.length = 0
-        this.current_occupancy = 0
         return mess_buf
     }
 
     push(message){
         this.messages.push(message)
-        this.current_occupancy += message.length
-        this.length += 1
-        this.total_message_count+=1;
-        this.total_message_size += message.length
-        this.avg_message_size = this.total_message_size/this.total_message_count
+        this.length += message.length
     }
 
-    checkAlmostFull(){
+    isFull(){
         //console.log(`Size: ${this.size-this.avg_message_size} Current Occupancy: ${this.current_occupancy}`)
-        return this.size-this.avg_message_size < this.current_occupancy
+        return this.length >= this.bitLimit
     }
 }
 
 
 class BlockchainTransaction{
-    constructor(sendingNode,messageList,id){
+    constructor(sendingNode,messageList,id,invalid_flag){
         this.sendingNode = sendingNode
         this.messageList = messageList
         this.id = id
+        this.invalid_flag = invalid_flag || false;
     }
 }
 
@@ -58,11 +50,13 @@ class ProofOfStakeTransferTransaction extends ProofOfStakeTransaction{
 
 
 class BlockchainBlock{
-    constructor(transactions,proposer,nextProposer,id){
+    constructor(transactions,proposer,nextProposerBuffer,id,invalid_flag){
         this.transactions = transactions
         this.proposer = proposer
-        this.nextProposer = nextProposer
+        this.nextProposerBuffer = nextProposerBuffer
+        this.nextProposerBufferIndex = 0
         this.id = id
+        this.invalid_flag = invalid_flag || false;
     }
 }
 
@@ -71,9 +65,6 @@ class LocalBlockchain{
         this.node = node
         this.blocks = []
         this.length = 0
-        if (genesisNode != null){
-            this.addBlock(new BlockchainBlock([],this.node,genesisNode,0))
-        }
         this.id = 0
     }
 
@@ -112,45 +103,88 @@ class LocalBlockchain{
         }
         return this.blocks[this.blocks.length-1].id
     }
+
+    isTransactionInBlocks(transaction){
+        for (const block of this.blocks){
+            for (const t of block.transactions){
+                if (t == transaction){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    getTopBlock(){
+        return this.blocks[this.blocks.length-1]
+    }
 }
 
 class LocalProofOfStakeBlockchain extends LocalBlockchain{
-    constructor(node,genesisNode,balance){
+    constructor(node,genesisNode){
         super(node,genesisNode)
         this.currentBalances = {}
-        this.currentBalances[node] = balance
+        //this.currentBalances is only updated when a new block is added, therefore it might not be up to date, which will result in the node proposing
+        //transactions, even if it no longer has the balance to do so. currentAvailableBalance allows the user to know how much it can still spend, by
+        //keeping track of how much the user has spent (updated in every created transaction) and how much it has received (updated in every block)
+        this.currentAvailableBalance = 0 
+    }
+
+    slashNode(node){
+        console.log(`[${this.node.name}] Slashing node ${node.name}`)
+        this.currentBalances[node.id] *= INVALID_BLOCK_SLASH_RATIO
     }
 
     
     updateCurrentBalances(block){
+        let proposerReward = 0
         for (const transaction of block.transactions){
+            if(this.currentBalances[transaction.sendingNode.id] == undefined){
+                this.currentBalances[transaction.sendingNode.id] = 0
+            }             
+            if(this.currentBalances[block.proposer.id] == undefined){
+                this.currentBalances[block.proposer.id] = 0
+            }
             if (transaction instanceof ProofOfStakeTransferTransaction){
-                this.currentBalances[transaction.sendingNode] -= transaction.amount + transaction.fee
-                this.currentBalances[transaction.receivingNode] += transaction.amount
+                if(this.currentBalances[transaction.receivingNode.id] == undefined){
+                    this.currentBalances[transaction.receivingNode.id] = 0
+                }
+                this.currentBalances[transaction.sendingNode.id] -= transaction.amount + transaction.fee
+                this.currentBalances[transaction.receivingNode.id] += transaction.amount
+                if (transaction.receivingNode == this.node){
+                    this.currentAvailableBalance += transaction.amount
+                }
+                proposerReward += transaction.fee
+                //console.log(`[${this.node.name}] Adding ${transaction.amount} to node ${transaction.receivingNode.name} (current balance: ${this.currentBalances[transaction.receivingNode.id]})`)
             }
             if (transaction instanceof ProofOfStakeTransaction){
-                if( this.node == transaction.sendingNode){
-                }
-                this.currentBalances[transaction.sendingNode] -= transaction.fee
-                this.currentBalances[block.proposer] += transaction.fee
+                //console.log(`[${this.node.name}] Adding transaction ${transaction.id} from node ${transaction.sendingNode.id} with fee ${transaction.fee})`)
+                this.currentBalances[transaction.sendingNode.id] -= transaction.fee
+                proposerReward += transaction.fee
             }
         }
+        proposerReward += VALID_BLOCK_PROPOSAL_REWARD
+        if (proposerReward > MINIMUM_TRANSACTIONS_IN_BLOCK*MAXIMUM_TRANSACTION_FEE){
+            proposerReward = MINIMUM_TRANSACTIONS_IN_BLOCK*MAXIMUM_TRANSACTION_FEE
+        }
+        this.currentBalances[block.proposer.id] += proposerReward
     }
+
+    lastUpdateBlockID = null
 
     addBlock(block){
         super.addBlock(block)
+        if (this.lastUpdateBlockID == block.id){
+            return
+        }
         this.updateCurrentBalances(block)
+        this.lastUpdateBlockID = block.id
     }
 
-    
-    getNodeBalance(nodeName){
-        for (const node of Object.keys(this.currentBalances)){
-            if (node.name == nodeName){
-                return this.currentBalances[node]
-            }
-        }
 
-        return null;
+    
+    getNodeBalance(node){
+        return this.currentBalances[node.id]
     }
 
 }

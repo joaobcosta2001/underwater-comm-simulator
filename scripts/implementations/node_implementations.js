@@ -15,35 +15,37 @@ class RandomMessageNode extends Node{
         new PhysicalProtocol(this,this.channelList)
 
         
-        this.lastMessageTime = Date.now()
+        this.lastMessageTime = this.simulation.getTime()
         this.messageDelay = 1000 + 4000 * Math.random()
         this.target_position = new Vec3(-1000+Math.random()*2000,-1000+Math.random()*2000,-1000+Math.random()*2000)
 
 
         this.simulateMessageExchange = ()=>{
             //Send messages
-            if (Date.now() - this.lastMessageTime > this.messageDelay){
+            if (this.simulation.getTime() - this.lastMessageTime > this.messageDelay){
                 if (Math.random() < 0.5){
                     disp(`[${this.name}] sending DISCOVER`,APPLICATION_VERBOSE)
                     this.protocolList[0].broadcastMessage("DISCOVER")
-                    this.lastMessageTime = Date.now()
+                    this.lastMessageTime = this.simulation.getTime()
                     this.messageDelay = 1000 + 4000 * Math.random()
                 }else{
-                    const receiver_node = this.getRandomKnownNode()
-                    if(receiver_node != null){
-                        disp(`[${this.name}] sending greetings to ${receiver_node.name}`,APPLICATION_VERBOSE)
-                        this.protocolList[0].sendMessage("Hello", receiver_node)
-                        this.lastMessageTime = Date.now()
-                        this.messageDelay = 1000 + 4000 * Math.random()
-                    }else{
-                        disp(`[${this.name}] No known nodes!`,APPLICATION_VERBOSE)
+                    if (this.protocolList[1].blockchain.availableBalance > LOW_BALANCE_THRESHOLD){
+                        const receiver_node = this.getRandomKnownNode()
+                        if(receiver_node != null){
+                            disp(`[${this.name}] sending greetings to ${receiver_node.name}`,APPLICATION_VERBOSE)
+                            this.protocolList[0].sendMessage("Hello", receiver_node)
+                            this.lastMessageTime = this.simulation.getTime()
+                            this.messageDelay = 1000 + 4000 * Math.random()
+                        }else{
+                            disp(`[${this.name}] No known nodes!`,APPLICATION_VERBOSE)
+                        }
                     }
                 }
             }
 
             //Delete old messages
             for (const message of this.received_messages_buffer){
-                if (Date.now()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
+                if (this.simulation.getTime()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
                     this.received_messages_buffer.pop(message)
                 }
             }
@@ -99,22 +101,22 @@ class RandomMessageNode extends Node{
 
 class ProofOfStakeNode extends Node{
 
-    constructor(simulation,name,x,y,z,isGenesis){
+    constructor(simulation,name,x,y,z,isGenesis,isMalicious=false){
         super(simulation,name,x,y,z);
-        const optical_channel_half_distance = 1000 //At 100m packets have a 50% chance of being lost
+        const optical_channel_half_distance = 900 //At half_distance packets have a 50% chance of being lost
         this.addChannel(new Channel(this,"optical",225000,1000000,optical_channel_half_distance)) //Light in water speed, 1Mb/s
         this.isGenesis = isGenesis
         new RandomMessageApplicationProtocol(this)
         if(isGenesis){
-            new ProofOfStakeProtocolGenesis(this,Math.random()*1000)
+            new ProofOfStakeProtocolGenesis(this)
         }else{
-            new ProofOfStakeProtocol(this,Math.random()*1000)
+            new ProofOfStakeProtocol(this,isMalicious)
         }
         new PhysicalProtocol(this,this.channelList)
 
         
-        this.lastMessageTime = Date.now()
-        this.messageDelay = 1000 + 4000 * Math.random()
+        this.lastMessageTime = this.simulation.getTime()
+        this.messageDelay = (MESSAGE_DELAY_MINIMUM + MESSAGE_DELAY_VARIABILITY * Math.random())*MESSAGE_DELAY_MULTIPLIER
 
         this.target_position = new Vec3(-1000+Math.random()*2000,-1000+Math.random()*2000,-1000+Math.random()*2000)
         this.deltaVec = Vec3.directionVector(this.position,this.target_position).normalize()
@@ -127,11 +129,15 @@ class ProofOfStakeNode extends Node{
 
         }
 
+        this.sendDiscovery = true
+
         this.simulateMessageExchange = ()=>{
-            //Send messages
-            if (Date.now() - this.lastMessageTime > this.messageDelay){
-                if (Math.random() < 0.5){
+            if (this.simulation.getTime() - this.lastMessageTime > this.messageDelay){
+                
+                //this.simulation.simulator.ui.addNodeEvent(this,"Created message (" + this.simulation.getTime() + "-" + this.lastMessageTime + "=" + (this.simulation.getTime()-this.lastMessageTime) + ">" + this.messageDelay + ")")
+                if (this.sendDiscovery){
                     this.broadcastDiscoverMessage()
+                    this.sendDiscovery = false
                 }else{
                     const receiver_node = this.getRandomKnownNode()
                     if(receiver_node != null){
@@ -140,14 +146,15 @@ class ProofOfStakeNode extends Node{
                     }else{
                         this.broadcastDiscoverMessage()
                     }
+                    this.sendDiscovery = true
                 }
-                this.lastMessageTime = Date.now()
-                this.messageDelay = (1000 + 4000 * Math.random())/TIME_MULTIPLIER
+                this.lastMessageTime = this.simulation.getTime()
+                this.messageDelay = (MESSAGE_DELAY_MINIMUM + MESSAGE_DELAY_VARIABILITY * Math.random())*MESSAGE_DELAY_MULTIPLIER
             }
 
             //Delete old messages
             for (const message of this.received_messages_buffer){
-                if (Date.now()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
+                if (this.simulation.getTime()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
                     this.received_messages_buffer.pop(message)
                 }
             }
@@ -167,8 +174,8 @@ class ProofOfStakeNode extends Node{
 
         }
 
-        
-        this.propertiesToDisplay = ["name","position","target_position","direction",["received_messages_buffer","length"],["knownNodes","length"],["protocolList",1,"mem_pool","length"],["protocolList",1,"blockchain","length"],["protocolList",1,"message_buffer","length"],["protocolList",1,"blockchain","currentBalances",this]]
+        this.degree = null
+        this.propertiesToDisplay = ["name","position","target_position","direction",["received_messages_buffer","length"],["knownNodes","length"],["protocolList",1,"mem_pool","length"],["protocolList",1,"blockchain","length"],["protocolList",1,"message_buffer","length"],"degree"]
         
     }
 
@@ -214,9 +221,9 @@ class ProofOfStakeNode extends Node{
 class ProofOfStakeNode_RandomMovement extends ProofOfStakeNode{
 
 
-    constructor(simulation,name,x,y,z,isGenesis){
+    constructor(simulation,name,x,y,z,isGenesis,isMalicious=false){
 
-        super(simulation,name,x,y,z,isGenesis)
+        super(simulation,name,x,y,z,isGenesis,isMalicious)
 
         this.model = this.simulation.simulator.assets["torpedoModel"]
 
@@ -237,9 +244,9 @@ class ProofOfStakeNode_RandomMovement extends ProofOfStakeNode{
 class ProofOfStakeNode_Stationary extends ProofOfStakeNode{
 
 
-    constructor(simulation,name,x,y,z,isGenesis){
+    constructor(simulation,name,x,y,z,isGenesis,isMalicious=false){
 
-        super(simulation,name,x,y,z,isGenesis)
+        super(simulation,name,x,y,z,isGenesis,isMalicious)
 
         this.model = this.simulation.simulator.assets["stationModel"]
 
@@ -256,9 +263,9 @@ class ProofOfStakeNode_Stationary extends ProofOfStakeNode{
 class ProofOfStakeNode_Mule extends ProofOfStakeNode{
 
 
-    constructor(simulation,name,isGenesis,pathPoints){
+    constructor(simulation,name,isGenesis,pathPoints,isMalicious=false){
 
-        super(simulation,name,pathPoints[0].x,pathPoints[0].y,pathPoints[0].z,isGenesis)
+        super(simulation,name,pathPoints[0].x,pathPoints[0].y,pathPoints[0].z,isGenesis,isMalicious)
 
         this.model = torpedoModel
 
