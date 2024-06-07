@@ -61,7 +61,7 @@ class Simulator{
         BROADCAST_PULL_PERIOD = 500
         let SIMULATION_STOP_BLOCK_COUNT = 100
 
-        this.simulation = new PresetSimulation(this,"dodecahedron-1-malicious.json")
+        this.simulation = new PresetSimulation(this,"tetrahedron-1-malicious.json")
         this.ui.loadSimulation(this.simulation)
         this.ui.clearNodeEvents()
         this.simulation.simulate()

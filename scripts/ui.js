@@ -441,7 +441,10 @@ class UI{
             blockTitle.innerHTML = `Block ${block.id}`
             let blockInfo = document.createElement("div")
             blockInfo.className = "bc-state-block-info"
-            blockInfo.innerHTML = `Transactions: ${block.transactions.length}<br/>Proposer: ${block.proposer == null?"GENESIS":block.proposer.name}<br/>Next Proposer: ${block.nextProposerBuffer[block.nextProposerBufferIndex].name}`
+            if(this.simulator.simulation.globalBlockchain.blockNextProposerBufferIndex[block.id] == null){
+                this.simulator.simulation.globalBlockchain.blockNextProposerBufferIndex[block.id] = 0
+            }
+            blockInfo.innerHTML = `Transactions: ${block.transactions.length}<br/>Proposer: ${block.proposer == null?"GENESIS":block.proposer.name}<br/>Next Proposer: ${block.nextProposerBuffer[this.simulator.simulation.globalBlockchain.blockNextProposerBufferIndex[block.id]].name}`
             if (!this.openBlocksList.includes(block)){
                 blockInfo.style.display = "none"
             }

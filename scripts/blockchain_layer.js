@@ -54,7 +54,6 @@ class BlockchainBlock{
         this.transactions = transactions
         this.proposer = proposer
         this.nextProposerBuffer = nextProposerBuffer
-        this.nextProposerBufferIndex = 0
         this.id = id
         this.invalid_flag = invalid_flag || false;
     }
@@ -66,6 +65,7 @@ class LocalBlockchain{
         this.blocks = []
         this.length = 0
         this.id = 0
+        this.blockNextProposerBufferIndex = {}
     }
 
     findBlock(id){

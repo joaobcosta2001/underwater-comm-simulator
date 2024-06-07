@@ -40,7 +40,10 @@ class BlockchainProtocol extends Protocol{
             this.mem_pool = []
             for (const transaction of mem_pool_copy){
                 if (this.blockchain.isTransactionInBlocks(transaction)){
-                    this.mem_pool.pop(transaction)
+                    let index = this.mem_pool.indexOf(transaction);
+                    if (index > -1) {
+                        this.mem_pool.splice(index, 1);
+                    }
                 }
             }
             return mem_pool_copy
@@ -66,7 +69,8 @@ class BlockchainProtocol extends Protocol{
                 return false
             }
             let topBlock = this.blockchain.blocks[this.blockchain.blocks.length-1]
-            return topBlock.nextProposerBuffer[topBlock.nextProposerBufferIndex] == this.node
+            let nextProposerIndex = this.blockchain.blockNextProposerBufferIndex[topBlock.id]==null?0:this.blockchain.blockNextProposerBufferIndex[topBlock.id]
+            return topBlock.nextProposerBuffer[nextProposerIndex] == this.node
         }
 
         this.nextProposer = ()=>{
@@ -74,7 +78,8 @@ class BlockchainProtocol extends Protocol{
                 return null
             }
             let topBlock = this.blockchain.blocks[this.blockchain.blocks.length-1]
-            return topBlock.nextProposerBuffer[topBlock.nextProposerBufferIndex]
+            let nextProposerIndex = this.blockchain.blockNextProposerBufferIndex[topBlock.id]==null?0:this.blockchain.blockNextProposerBufferIndex[topBlock.id]
+            return topBlock.nextProposerBuffer[nextProposerIndex]
         }
 
         this.sendMessage = (message)=>{
@@ -114,10 +119,12 @@ class BlockchainProtocol extends Protocol{
             for (const transaction of received_message.content.payload.knownTransactions){
                 if(this.handleTransactionReceive(transaction)){
                     //this.node.simulation.simulator.ui.addNodeEvent(this.node,"Found new transaction in StatusUpdateRequest")
+                    //console.log(`[${this.node.name}] Received transaction from ${received_message.sender.name} (BCSU)`)
                 }
             }
             for (const block of received_message.content.payload.knownBlocks){
                 if (this.blockchain.findBlock(block.id) == null){
+                    console.log(`[${this.node.name}] Received block ${block.id} from ${received_message.sender.name} (BCSU)`)
                     this.blockchain.addBlock(block)
                     this.handleBlockReceive(block)
                 }
@@ -154,9 +161,13 @@ class BlockchainProtocol extends Protocol{
             let unknownTransactionCount = 0
             let unknownBlockCount = 0
             for (const transaction of received_message.content.payload.transactions){
-                unknownTransactionCount += this.handleTransactionReceive(transaction)?1:0
+                if( this.handleTransactionReceive(transaction)){
+                    unknownTransactionCount += 1
+                    //console.log(`[${this.node.name}] Received transaction from ${received_message.sender.name} (BCSUR)`)
+                }
             }
             for (const block of received_message.content.payload.blocks){
+                console.log(`[${this.node.name}] Received block ${block.id} from ${received_message.sender.name} (BCSUR)`)
                 this.blockchain.addBlock(block)
                 this.handleBlockReceive(block)
                 unknownBlockCount += 1
@@ -184,8 +195,10 @@ class BlockchainProtocol extends Protocol{
 
         this.handleMessageReceive = (received_message)=>{
             if (received_message.content instanceof BlockchainTransaction){
+                //console.log(`[${this.node.name}] Received transaction ${received_message.content.id} from ${received_message.sender.name} (DM)`)
                 this.handleTransactionReceive(received_message.content)
             }else if(received_message.content instanceof BlockchainBlock){
+                console.log(`[${this.node.name}] Received block ${received_message.content.id} from ${received_message.sender.name} (DM)`)
                 this.handleBlockReceive(received_message.content)
             }else if( received_message.content === "DISCOVER_REPLY"){
                 this.handleDiscoverReceive(received_message)
@@ -310,15 +323,15 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
                     return false;
                 }
                 // Initialize sender's balance if not already done
-                if (!tempBalances.hasOwnProperty(transaction.sendingNode)) {
-                    tempBalances[transaction.sendingNode] = this.blockchain.getNodeBalance(transaction.sendingNode);
+                if (!tempBalances.hasOwnProperty(transaction.sendingNode.id)) {
+                    tempBalances[transaction.sendingNode.id] = this.blockchain.getNodeBalance(transaction.sendingNode);
                 }
                 // Check if the transaction fee is negative or sender does not have enough balance
-                if ((transaction.fee < 0 || tempBalances[transaction.sendingNode] < transaction.fee) && transaction.sendingNode != "GENESIS") {
+                if ((transaction.fee < 0 || tempBalances[transaction.sendingNode.id] < transaction.fee) && transaction.sendingNode != "GENESIS") {
                     return false;
                 }
                 // Deduct the transaction fee from the sender's temporary balance
-                tempBalances[transaction.sendingNode] -= transaction.fee;
+                tempBalances[transaction.sendingNode.id] -= transaction.fee;
             }
             return true;
         }
@@ -382,7 +395,10 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
         this.chooseTransactions = ()=>{
             for (const transaction of this.mem_pool){
                 if (this.blockchain.isTransactionInBlocks(transaction)){
-                    this.mem_pool.pop(transaction)
+                    let index = this.mem_pool.indexOf(transaction);
+                    if (index > -1) {
+                        this.mem_pool.splice(index, 1);
+                    }
                 }
             }
             
@@ -400,6 +416,10 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
             if (transaction.invalid_flag){
                 return false
             }
+            
+            if(this.node == this.nextProposer()){
+                let a = 1
+            }
             //Check if it is already in the mempool
             if (this.mem_pool.indexOf(transaction) != -1){
                 return false
@@ -408,6 +428,7 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
             if (this.blockchain.isTransactionInBlocks(transaction)){
                 return false
             }
+
 
             this.addTransaction(transaction)
 
@@ -420,15 +441,22 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
             
             //IF received an invalid block
             if (!this.validateBlock(block)){
-                console.log(`[${this.node.name}] Received invalid block from ${block.proposer.name}`)
-                //Change to a backup proposer
-                let topBlock = this.blockchain.getTopBlock()
-                topBlock.nextProposerBufferIndex++
-                if(topBlock.nextProposerBufferIndex >= topBlock.nextProposerBuffer.length && topBlock.nextProposerBuffer.length > 1){
-                    topBlock.nextProposerBufferIndex = 0
-                    alert("ALL BACKUP NODES PROPOSED INVALID BLOCKS!!! BLOCKCHAIN COMPROMISED")
+                //This if makes sure that a block is not slashed twice if a block is retransmitted.
+                if(block.proposer == block.nextProposerBuffer[this.blockchain.blockNextProposerBufferIndex[block.id]]){
+                    //Change to a backup proposer
+                    let topBlock = this.blockchain.getTopBlock()
+                    if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] ==null){
+                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 1
+                    }else{
+                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] += 1
+                    }
+                    console.log(`[${this.node.name}] Received invalid block from ${block.proposer.name}. Switching to backup proposer ${topBlock.nextProposerBuffer[this.blockchain.blockNextProposerBufferIndex[topBlock.id]].name}`)
+                    if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] >= topBlock.nextProposerBuffer.length && topBlock.nextProposerBuffer.length > 1){
+                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 0
+                        alert("ALL BACKUP NODES PROPOSED INVALID BLOCKS!!! BLOCKCHAIN COMPROMISED")
+                    }
+                    this.blockchain.slashNode(block.proposer)
                 }
-                this.blockchain.slashNode(block.proposer)
                 return
             }
 
@@ -452,8 +480,10 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
         this.attemptBlockProposal = ()=>{
             if (this.isNextProposer()){
                 if(this.mem_pool.length >= MINIMUM_TRANSACTIONS_IN_BLOCK){
-                    console.log("I have now enough transactions!(" + this.mem_pool.length +"/"+MINIMUM_TRANSACTIONS_IN_BLOCK+ ")")
-                    this.proposeNewBlock()
+                    console.log("[" + this.node.name + "]I have now enough transactions!(" + this.mem_pool.length +"/"+MINIMUM_TRANSACTIONS_IN_BLOCK+ ")")
+                    if(this.proposeNewBlock() == null){
+                        return false
+                    }
                     return true
                 }
             }

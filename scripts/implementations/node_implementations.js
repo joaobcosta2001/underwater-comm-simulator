@@ -46,7 +46,10 @@ class RandomMessageNode extends Node{
             //Delete old messages
             for (const message of this.received_messages_buffer){
                 if (this.simulation.getTime()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
-                    this.received_messages_buffer.pop(message)
+                    let index = this.received_messages_buffer.indexOf(message);
+                    if (index > -1) {
+                        this.received_messages_buffer.splice(index, 1);
+                    }
                 }
             }
         }
@@ -155,7 +158,10 @@ class ProofOfStakeNode extends Node{
             //Delete old messages
             for (const message of this.received_messages_buffer){
                 if (this.simulation.getTime()-message.arrivalTime > MESSAGE_LIFE_AFTER_ARRIVAL){
-                    this.received_messages_buffer.pop(message)
+                    let index = this.received_messages_buffer.indexOf(message);
+                    if (index > -1) {
+                        this.received_messages_buffer.splice(index, 1);
+                    }
                 }
             }
         }

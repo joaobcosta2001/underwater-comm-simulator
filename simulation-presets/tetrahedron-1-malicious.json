@@ -1,0 +1,40 @@
+{
+    "nodes":[
+        {
+            "name": "Node A",
+            "type":"stationary",
+            "x":0,
+            "y":0,
+            "z":577,
+            "isGenesis":true,
+            "isMalicious":false
+        },
+        {
+            "name": "Node B",
+            "type":"stationary",
+            "x":-500,
+            "y":0,
+            "z":-289,
+            "isGenesis":false,
+            "isMalicious":false
+        },
+        {
+            "name": "Node C",
+            "type":"stationary",
+            "x":500,
+            "y":0,
+            "z":-289,
+            "isGenesis":false,
+            "isMalicious":true
+        },
+        {
+            "name": "Node D",
+            "type":"stationary",
+            "x":0,
+            "y":-816,
+            "z":0,
+            "isGenesis":false,
+            "isMalicious":false
+        }
+    ]
+}
