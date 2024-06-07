@@ -66,6 +66,7 @@ class LocalBlockchain{
         this.length = 0
         this.id = 0
         this.blockNextProposerBufferIndex = {}
+        this.invalidBlocks = []
     }
 
     findBlock(id){

@@ -441,22 +441,23 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
             
             //IF received an invalid block
             if (!this.validateBlock(block)){
-                //This if makes sure that a block is not slashed twice if a block is retransmitted.
-                if(block.proposer == block.nextProposerBuffer[this.blockchain.blockNextProposerBufferIndex[block.id]]){
-                    //Change to a backup proposer
-                    let topBlock = this.blockchain.getTopBlock()
-                    if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] ==null){
-                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 1
-                    }else{
-                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] += 1
-                    }
-                    console.log(`[${this.node.name}] Received invalid block from ${block.proposer.name}. Switching to backup proposer ${topBlock.nextProposerBuffer[this.blockchain.blockNextProposerBufferIndex[topBlock.id]].name}`)
-                    if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] >= topBlock.nextProposerBuffer.length && topBlock.nextProposerBuffer.length > 1){
-                        this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 0
-                        alert("ALL BACKUP NODES PROPOSED INVALID BLOCKS!!! BLOCKCHAIN COMPROMISED")
-                    }
-                    this.blockchain.slashNode(block.proposer)
+                if (this.blockchain.invalidBlocks.indexOf(block) != -1){
+                    return
                 }
+                this.blockchain.invalidBlocks.push(block)
+                //Change to a backup proposer
+                let topBlock = this.blockchain.getTopBlock()
+                if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] ==null){
+                    this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 1
+                }else{
+                    this.blockchain.blockNextProposerBufferIndex[topBlock.id] += 1
+                }
+                console.log(`[${this.node.name}] Received invalid block from ${block.proposer.name}. Switching to backup proposer ${topBlock.nextProposerBuffer[this.blockchain.blockNextProposerBufferIndex[topBlock.id]].name}`)
+                if(this.blockchain.blockNextProposerBufferIndex[topBlock.id] >= topBlock.nextProposerBuffer.length && topBlock.nextProposerBuffer.length > 1){
+                    this.blockchain.blockNextProposerBufferIndex[topBlock.id] = 0
+                    alert("ALL BACKUP NODES PROPOSED INVALID BLOCKS!!! BLOCKCHAIN COMPROMISED")
+                }
+                this.blockchain.slashNode(block.proposer)
                 return
             }
 
@@ -493,7 +494,7 @@ class ProofOfStakeProtocol extends BlockchainProtocol{
         this.proposeNewBlock = ()=>{
             const new_block = this.createBlock();
             if (new_block != null){
-                console.log("Created new block adding")
+                console.log(`[${this.node.name}] Creating new block with id ${new_block.id} (nextProposer=${new_block.nextProposerBuffer[0].name})`)
                 this.addBlock(new_block)
                 this.broadcastMessage(new Message(this.node,null,new_block));
             }

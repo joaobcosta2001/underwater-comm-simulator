@@ -33,7 +33,7 @@ let MAXIMUM_TRANSACTION_FEE = 10
 let STARTING_BALANCE = 5000
 let LOW_BALANCE_THRESHOLD = 100 //If a node has less than this amount of currency, it will not generate messages
 let VALID_BLOCK_PROPOSAL_REWARD = 10 //Extra currency for proposer if it successfully proposes a block
-let INVALID_BLOCK_SLASH_RATIO = 0.8 //If a node proposes an invalid block, its balance is multiplied by this factor
+let INVALID_BLOCK_SLASH_RATIO = 0.5 //If a node proposes an invalid block, its balance is multiplied by this factor
 let REPEATED_PROPOSER_PENALTY = 0.5 //If a proposer has recently proposed a block, its balance is multiplied by this factor, making it less likely to be chosen again
 let BACKUP_PROPOSER_NUMBER = 2 //Number of backup proposers in case the first one fails. Proposer buffers will be 1 default proposer plus BACKUP_PROPOSER_NUMBER backup proposers
 
